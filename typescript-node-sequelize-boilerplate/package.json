@@ -28,10 +28,11 @@
     "start": "npm run serve",
     "dev": "tsnd --respawn  --inspect=3000 src/server.ts",
     "watch-ts": "tsc -w",
-    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\"  \"npm run watch-ts\" \"npm run watch-node\""
+    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\"  \"npm run watch-ts\" \"npm run watch-node\"",
+    "db:migrate": "npx sequelize-cli db:migrate",
+    "db:migrate:undo": "npx sequelize-cli db:migrate:undo"
   },
   "dependencies": {
-    "@types/node": "^20.8.4",
     "bcrypt": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "8.2.0",
@@ -59,6 +60,7 @@
     "@types/jsonwebtoken": "^8.5.9",
     "@types/lodash": "^4.14.170",
     "@types/morgan": "^1.9.3",
+    "@types/node": "^20.8.4",
     "@types/nodemailer": "6.4.0",
     "@types/request": "2.48.5",
     "@types/request-promise": "4.1.47",
@@ -70,10 +72,11 @@
     "eslint": "7.19.0",
     "eslint-config-prettier": "^8.5.0",
     "prettier": "^2.7.1",
+    "sequelize-cli": "^6.6.3",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.2.2"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=24.0.0"
   }
 }
