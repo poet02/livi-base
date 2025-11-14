@@ -1,37 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import appLogo from '/favicon.svg'
-import PWABadge from './PWABadge.tsx'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import { Login } from "./Pages/Login";
+import { Home } from "./Pages/Home";
+import { Profile } from "./Pages/Profile";
+import PWABadge from "./PWABadge";
 
-function App() {
-  const [count, setCount] = useState(0)
+// ----- Styled Components -----
+const Container = styled.div`
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+`;
+
+const BottomTabs = styled.div`
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  border-top: 1px solid #ddd;
+`;
+
+const Tab = styled.div`
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+  padding: 10px;
+`;
+
+// ----- Tabs Wrapper -----
+function TabsLayout() {
+  const navigate = useNavigate();
+  const current = window.location.pathname;
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={appLogo} className="logo" alt="hokkie-react-fe logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>hokkie-react</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-      <PWABadge />
-    </>
-  )
+    <Container>
+      <Routes>
+        <Route path="/home" element={<Home />} />
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
+
+      <BottomTabs>
+        <Tab onClick={() => navigate("/home")} style={{ fontWeight: current === "/home" ? "bold" : "normal" }}>
+          Home
+        </Tab>
+        <Tab onClick={() => navigate("/profile")} style={{ fontWeight: current === "/profile" ? "bold" : "normal" }}>
+          Profile
+        </Tab>
+      </BottomTabs>
+    </Container>
+  );
 }
 
-export default App
+// ----- App Root -----
+export default function App() {
+  return (
+   <>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/*" element={<TabsLayout />} />
+      </Routes>
+    </Router>
+    {/* <PWABadge /> */}
+   </>
+  );
+}
