@@ -1,9 +1,14 @@
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { Login } from "./Pages/Login";
 import { Home } from "./Pages/Home";
 import { Profile } from "./Pages/Profile";
 import PWABadge from "./PWABadge";
+import { Properties } from "./Pages/Properties";
+import { Property } from "./Pages/Property";
+import { AddProperty } from "./Pages/AddProperty";
+import { CircleUserRound, MapPinHouse } from "lucide-react";
+import { SearchPlaces } from "./Pages/SearchPlaces";
 
 // ----- Styled Components -----
 const Container = styled.div`
@@ -16,7 +21,7 @@ const Container = styled.div`
 const BottomTabs = styled.div`
   display: flex;
   justify-content: space-around;
-  padding: 10px 0;
+  // padding: 10px 0;
   border-top: 1px solid #ddd;
 `;
 
@@ -27,26 +32,43 @@ const Tab = styled.div`
   padding: 10px;
 `;
 
+//take in current as prop
+const StyledTab = styled(Tab)<{ active?: boolean }>`
+  font-weight: ${(props) => (props.active ? "bold" : "normal")};
+  border-bottom: ${(props) => (props.active ? "2px solid purple" : "none")};
+  background-color: ${(props) => (props.active ? "darkviolet" : "transparent")};
+  border-radius: 8px;
+  color: ${(props) => (props.active ? "white" : "black")};
+`;
+
 // ----- Tabs Wrapper -----
 function TabsLayout() {
   const navigate = useNavigate();
-  const current = window.location.pathname;
-
+  const location = useLocation();
+  const current = location.pathname;
+  const showBottomTabs = (current === "/profile" || current === "/search-places");
   return (
     <Container>
       <Routes>
-        <Route path="/home" element={<Home />} />
+        {/* <Route path="/home" element={<Home />} /> */}
         <Route path="/profile" element={<Profile />} />
+        <Route path="/properties" element={<Properties />} />
+        <Route path="/properties/:id" element={<Property />} />
+        <Route path="/add-property" element={<AddProperty />} />
+        <Route path="/search-places" element={<SearchPlaces />} />
+
       </Routes>
 
-      <BottomTabs>
-        <Tab onClick={() => navigate("/home")} style={{ fontWeight: current === "/home" ? "bold" : "normal" }}>
-          Home
-        </Tab>
-        <Tab onClick={() => navigate("/profile")} style={{ fontWeight: current === "/profile" ? "bold" : "normal" }}>
-          Profile
-        </Tab>
-      </BottomTabs>
+      {showBottomTabs && (
+        <BottomTabs>
+          <StyledTab onClick={() => navigate("/search-places")} active={current === "/search-places"}>
+            <MapPinHouse size={24} />
+          </StyledTab>
+          <StyledTab onClick={() => navigate("/profile")} active={current === "/profile"}>
+            <CircleUserRound />
+          </StyledTab>
+        </BottomTabs>
+      )}
     </Container>
   );
 }
@@ -61,7 +83,6 @@ export default function App() {
         <Route path="/*" element={<TabsLayout />} />
       </Routes>
     </Router>
-    {/* <PWABadge /> */}
    </>
   );
 }
