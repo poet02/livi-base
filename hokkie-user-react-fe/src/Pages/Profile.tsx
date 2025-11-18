@@ -65,6 +65,13 @@ export function Profile() {
     //   description: "View storage usage and limits",
     //   size: 'small',
     // },
+     {
+      title: "Test Page",
+      icon: <Database />,
+      onClick: () => navigate("/test-page"),
+      description: "test page for development",
+      size: 'small',
+    },
     // {
     //   title: "Notifications",
     //   icon: <Bell />,

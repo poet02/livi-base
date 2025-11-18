@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation, useBlocker } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import { Camera, X, RotateCcw, Check, ArrowLeft, VideoOff } from 'lucide-react';
+import { Camera, X, RotateCcw, Check, ArrowLeft, VideoOff, ChevronUp, ChevronDown } from 'lucide-react';
+import { useCamera } from '../context/CameraContext';
 
 const Container = styled.div`
   height: 100vh;
@@ -102,7 +103,7 @@ const Viewfinder = styled.div`
 
 const Controls = styled.div`
   position: absolute;
-  bottom: 2rem;
+  bottom: ${props => props.hasImages ? '100px' : '2rem'}; /* Move up when gallery is present */
   left: 0;
   right: 0;
   display: flex;
@@ -110,6 +111,7 @@ const Controls = styled.div`
   align-items: center;
   gap: 2rem;
   padding: 0 2rem;
+  transition: bottom 0.3s ease;
 `;
 
 const CaptureButton = styled.button`
@@ -173,13 +175,23 @@ const PreviewContainer = styled.div`
   display: flex;
   flex-direction: column;
   z-index: 20;
+  // height: 100vh;
+`;
+
+const PreviewContent = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
 `;
 
 const PreviewImage = styled.img`
-  flex: 1;
-  width: 100%;
+  max-width: 100%;
+  max-height: 70vh;
   object-fit: contain;
-  background: black;
+  border-radius: 8px;
 `;
 
 const PreviewControls = styled.div`
@@ -224,47 +236,111 @@ const PreviewButton = styled.button<{ variant: 'accept' | 'reject' }>`
   }
 `;
 
-const GallerySection = styled.div`
-  background: rgba(0, 0, 0, 0.8);
-  padding: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+// Updated Gallery Section as Expandable Drawer
+const GalleryDrawer = styled.div<{ isOpen: boolean }>`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px 16px 0 0;
+  transition: all 0.3s ease;
+  z-index: 10;
+  height: ${props => props.isOpen ? '100vh' : '60px'}; /* Reduced closed height */
+  max-height: ${props => props.isOpen ? '80vh' : '60px'}; /* Reduced closed height */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 `;
 
-const GalleryTitle = styled.h3`
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
+const DrawerHeader = styled.div`
+  padding: 0rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  min-height: 60px; /* Reduced height */
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+`;
+
+const DrawerTitle = styled.h3`
+  margin: 0;
+  font-size: 1rem; /* Slightly smaller font */
   font-weight: 600;
   color: white;
-  text-align: center;
+`;
+
+const DrawerToggle = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  svg {
+    width: 20px; /* Smaller icons */
+    height: 20px;
+  }
+`;
+
+const DrawerContent = styled.div`
+  flex: 1;
+  padding: 1rem 1.5rem;
+  overflow-y: auto;
 `;
 
 const GalleryGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
-  max-height: 100px;
-  overflow-y: auto;
+  display: flex;
+  // flex: 1;
+  height: 100%;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  padding-bottom: 1rem;
+`;
+
+const GalleryImageContainer = styled.div`
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
 `;
 
 const GalleryImage = styled.img`
   width: 100%;
-  aspect-ratio: 1;
+  height: 100%;
   object-fit: cover;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-
-  &:hover {
-    opacity: 0.8;
-  }
+  display: block;
 `;
 
 const EmptyGallery = styled.div`
-  grid-column: 1 / -1;
   text-align: center;
   color: rgba(255, 255, 255, 0.5);
   font-size: 0.875rem;
-  padding: 1rem;
+  padding: 2rem;
+  width: 100%;
 `;
 
 const ErrorMessage = styled.div`
@@ -314,20 +390,14 @@ const CameraStatus = styled.div<{ active: boolean }>`
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 600;
-// `;
-// import { useState, useRef, useEffect } from 'react';
-// import { useNavigate, useLocation, useBlocker } from 'react-router-dom';
-// import styled from 'styled-components';
-// import { Camera, X, RotateCcw, Check, ArrowLeft, VideoOff } from 'lucide-react';
-
-// ... (keep all your existing styled components exactly as they were)
+`;
 
 export function Media() {
   const navigate = useNavigate();
   const location = useLocation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string>('');
@@ -338,23 +408,16 @@ export function Media() {
   const [isLoading, setIsLoading] = useState(true);
   const [debugInfo, setDebugInfo] = useState<string>('Initializing...');
   const [videoReady, setVideoReady] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
   // Get callback from navigation state
   const onImagesCapture = location.state?.onImagesCapture;
   const initialImages = location.state?.initialImages || [];
 
-  // Use React Router's blocker to catch navigation attempts
-  // const blocker = useBlocker(({ currentLocation, nextLocation }) => {
-  //   // If we're navigating away from this page
-  //   if (currentLocation.pathname === '/media' && nextLocation.pathname !== '/media') {
-  //     cleanupCamera();
-  //   }
-  //   return false; // Allow navigation
-  // });
+  const { setActiveStream, stopCamera: globalStopCamera } = useCamera();
 
   // Initialize camera after component mounts and refs are available
   useEffect(() => {
-    // Small delay to ensure refs are set
     const timer = setTimeout(() => {
       startCamera();
     }, 100);
@@ -365,99 +428,57 @@ export function Media() {
     };
   }, []);
 
-  // Enhanced cleanup that's more aggressive
+  // Restart video when returning from preview
+  useEffect(() => {
+    if (!currentPreview && stream && videoRef.current) {
+      const video = videoRef.current;
+      video.srcObject = stream;
+      video.play().catch(error => {
+        console.error('Failed to restart video after preview:', error);
+        setDebugInfo(`Failed to restart video: ${error.message}`);
+      });
+    }
+  }, [currentPreview, stream]);
+
+  // Clean up ALL object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      console.log('Cleaning up all object URLs');
+      imagePreviews.forEach(url => {
+        URL.revokeObjectURL(url);
+      });
+      if (currentPreview) {
+        URL.revokeObjectURL(currentPreview);
+      }
+    };
+  }, []);
+
   const cleanupCamera = () => {
     console.log('Cleaning up camera...');
-    
+
     if (stream) {
       console.log('Stopping media stream tracks');
       stream.getTracks().forEach(track => {
         console.log(`Stopping track: ${track.kind} - ${track.readyState}`);
-        track.stop(); // This should stop the camera
-        track.enabled = false; // Disable the track
+        track.stop();
+        track.enabled = false;
       });
       setStream(null);
     }
-    
-    // Also try to stop any video playback
+
+    globalStopCamera();
+
     if (videoRef.current) {
       const video = videoRef.current;
       video.pause();
       video.srcObject = null;
-      video.load(); // Reset the video element
+      video.load();
     }
-    
-    // Clean up object URLs
-    imagePreviews.forEach(url => {
-      URL.revokeObjectURL(url);
-    });
 
     setIsCameraActive(false);
     setVideoReady(false);
-    
     console.log('Camera cleanup completed');
   };
-
-  // Handle page visibility changes (tab switching)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // Page is hidden (user switched tabs or minimized window)
-        console.log('Page hidden - cleaning up camera');
-        cleanupCamera();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
-
-  // Handle beforeunload (page refresh/close)
-  useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      console.log('Page unloading - cleaning up camera');
-      cleanupCamera();
-      // Optional: prevent the unload to ensure cleanup completes
-      event.preventDefault();
-      event.returnValue = '';
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
-
-  // Handle popstate (browser back/forward)
-  useEffect(() => {
-    const handlePopState = () => {
-      console.log('Browser navigation detected - cleaning up camera');
-      cleanupCamera();
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
-
-  // Periodic cleanup check - as a safety net
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Check if we're still on the media page
-      if (!window.location.pathname.includes('/media') && stream) {
-        console.log('No longer on media page but camera still active - emergency cleanup');
-        cleanupCamera();
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [stream]);
 
   const setupVideo = (mediaStream: MediaStream) => {
     if (!videoRef.current) {
@@ -478,6 +499,7 @@ export function Media() {
             setVideoReady(true);
             setIsCameraActive(true);
             setIsLoading(false);
+            setActiveStream(mediaStream);
             resolve();
           })
           .catch(reject);
@@ -496,7 +518,6 @@ export function Media() {
       video.addEventListener('canplay', onCanPlay);
       video.addEventListener('error', onError);
 
-      // Cleanup
       Promise.resolve().then(() => {
         clearTimeout(timeout);
       });
@@ -509,20 +530,18 @@ export function Media() {
       setCameraError('');
       setDebugInfo('Requesting camera access...');
 
-      // Check if video ref is available
       if (!videoRef.current) {
         setDebugInfo('Waiting for video element...');
-        // Try again after a short delay
         setTimeout(startCamera, 100);
         return;
       }
 
-      // Stop existing stream if any
-      cleanupCamera();
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
 
-      // Try with basic constraints first
       const constraints = {
-        video: { 
+        video: {
           facingMode,
           width: { ideal: 1280 },
           height: { ideal: 720 }
@@ -536,9 +555,8 @@ export function Media() {
       setStream(mediaStream);
       setDebugInfo('Camera access granted! Setting up video...');
 
-      // Set up the video element with the stream
       await setupVideo(mediaStream);
-      
+
     } catch (error: any) {
       console.error('Error accessing camera:', error);
       setDebugInfo(`Camera error: ${error.message}`);
@@ -547,16 +565,10 @@ export function Media() {
     }
   };
 
-  const stopCamera = () => {
-    cleanupCamera();
-  };
-
   const switchCamera = () => {
     const newMode = facingMode === 'user' ? 'environment' : 'user';
     setFacingMode(newMode);
     setDebugInfo(`Switching camera to: ${newMode}`);
-    
-    // Restart camera with new facing mode
     setTimeout(startCamera, 100);
   };
 
@@ -571,7 +583,6 @@ export function Media() {
         return;
       }
 
-      // Set canvas dimensions to match video
       const width = video.videoWidth || 1280;
       const height = video.videoHeight || 720;
       canvas.width = width;
@@ -580,28 +591,24 @@ export function Media() {
       setDebugInfo(`Capturing photo: ${width}x${height}`);
 
       try {
-        // Draw current video frame to canvas
         context.drawImage(video, 0, 0, width, height);
 
-        // Convert canvas to blob and create File object
         canvas.toBlob((blob) => {
           if (blob) {
             const file = new File([blob], `property-photo-${Date.now()}.jpg`, {
               type: 'image/jpeg'
             });
 
-            // Create preview URL
             const previewUrl = URL.createObjectURL(blob);
-            
-            // Update state
+
             const newImages = [...capturedImages, file];
             const newPreviews = [...imagePreviews, previewUrl];
-            
+
             setCapturedImages(newImages);
             setImagePreviews(newPreviews);
             setDebugInfo(`Photo captured! Total: ${newImages.length}`);
-            
-            // Show preview
+
+            // REMOVED auto-open gallery - gallery stays closed
             setCurrentPreview(previewUrl);
           } else {
             setDebugInfo('Failed to create blob from canvas');
@@ -617,34 +624,33 @@ export function Media() {
 
   const acceptPhoto = () => {
     setCurrentPreview(null);
-    setDebugInfo('Photo accepted');
+    setDebugInfo('Photo accepted - returning to camera');
   };
 
   const rejectPhoto = () => {
     if (currentPreview) {
-      // Remove the last captured image
       const newImages = capturedImages.slice(0, -1);
       const newPreviews = imagePreviews.slice(0, -1);
-      
+
       setCapturedImages(newImages);
       setImagePreviews(newPreviews);
-      
-      // Revoke the object URL for the rejected image
+
       URL.revokeObjectURL(currentPreview);
       setDebugInfo('Photo rejected and removed');
     }
     setCurrentPreview(null);
+    setDebugInfo('Photo rejected - returning to camera');
   };
 
   const removeImage = (index: number) => {
     const newImages = capturedImages.filter((_, i) => i !== index);
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    
+
+    URL.revokeObjectURL(imagePreviews[index]);
+
     setCapturedImages(newImages);
     setImagePreviews(newPreviews);
     
-    // Revoke the object URL
-    URL.revokeObjectURL(imagePreviews[index]);
     setDebugInfo(`Removed photo at index ${index}`);
   };
 
@@ -668,11 +674,17 @@ export function Media() {
     startCamera();
   };
 
+  const toggleGallery = () => {
+    setIsGalleryOpen(!isGalleryOpen);
+  };
+
   // Show preview if we have a current preview image
   if (currentPreview) {
     return (
       <PreviewContainer>
-        <PreviewImage src={currentPreview} alt="Captured preview" />
+        <PreviewContent>
+          <PreviewImage src={currentPreview} alt="Captured preview" />
+        </PreviewContent>
         <PreviewControls>
           <PreviewButton variant="reject" onClick={rejectPhoto}>
             <X />
@@ -704,10 +716,13 @@ export function Media() {
           <div>Video Ref: {videoRef.current ? 'AVAILABLE' : 'NULL'}</div>
           <div>Stream: {stream ? 'ACTIVE' : 'INACTIVE'}</div>
           <div>Video Ready: {videoReady ? 'YES' : 'NO'}</div>
+          <div>Preview Active: {currentPreview ? 'YES' : 'NO'}</div>
+          <div>Photos: {capturedImages.length}</div>
+          <div>Previews: {imagePreviews.length}</div>
         </DebugInfo>
 
-        <CameraStatus active={isCameraActive}>
-          {isCameraActive ? 'CAMERA ACTIVE' : 'CAMERA INACTIVE'}
+        <CameraStatus active={isCameraActive && !currentPreview}>
+          {isCameraActive && !currentPreview ? 'CAMERA ACTIVE' : 'CAMERA INACTIVE'}
         </CameraStatus>
 
         {isLoading && !cameraError && (
@@ -754,35 +769,36 @@ export function Media() {
           </ErrorMessage>
         )}
 
-        {/* Video element - always rendered but only shown when ready */}
+        {/* Video element */}
         <VideoElement
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          show={isCameraActive}
+          show={isCameraActive && !currentPreview}
           mirror={facingMode === 'user'}
         />
 
-        {isCameraActive && !cameraError && (
+        {isCameraActive && !cameraError && !currentPreview && (
           <>
             <CameraOverlay>
               <Viewfinder />
             </CameraOverlay>
-            
-            <Controls>
+
+            {/* Fixed: Controls now adjust position based on whether images exist */}
+            <Controls hasImages={capturedImages.length > 0}>
               <ControlButton onClick={switchCamera}>
                 <RotateCcw />
               </ControlButton>
-              
+
               <CaptureButton onClick={capturePhoto}>
                 <Camera />
               </CaptureButton>
-              
-              <ControlButton 
+
+              <ControlButton
                 onClick={handleDone}
                 disabled={capturedImages.length === 0}
-                style={{ 
+                style={{
                   opacity: capturedImages.length === 0 ? 0.5 : 1,
                   cursor: capturedImages.length === 0 ? 'not-allowed' : 'pointer'
                 }}
@@ -792,59 +808,68 @@ export function Media() {
             </Controls>
           </>
         )}
-        
+
         <Canvas ref={canvasRef} />
+
+        {/* Gallery Drawer */}
+        {capturedImages.length > 0 && (
+          <GalleryDrawer isOpen={isGalleryOpen}>
+            <DrawerHeader onClick={toggleGallery}>
+              <DrawerTitle>Captured Photos ({capturedImages.length})</DrawerTitle>
+              <DrawerToggle>
+                {isGalleryOpen ? <ChevronDown /> : <ChevronUp />}
+              </DrawerToggle>
+            </DrawerHeader>
+            
+            {isGalleryOpen && (
+              <DrawerContent>
+                <GalleryGrid>
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} style={{ position: 'relative' }}>
+                      <GalleryImageContainer
+                        onClick={() => setCurrentPreview(preview)}
+                      >
+                        <GalleryImage
+                          src={preview}
+                          alt={`Captured ${index + 1}`}
+                          onError={(e) => {
+                            console.error(`Failed to load image preview ${index}:`, preview);
+                            e.currentTarget.style.backgroundColor = '#ff000020';
+                          }}
+                        />
+                      </GalleryImageContainer>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeImage(index);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: '4px',
+                          right: '4px',
+                          background: 'rgba(0, 0, 0, 0.7)',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '20px',
+                          height: '20px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          color: 'white'
+                        }}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </GalleryGrid>
+              </DrawerContent>
+            )}
+          </GalleryDrawer>
+        )}
       </CameraContainer>
-
-      {capturedImages.length > 0 && (
-        <GallerySection>
-          <GalleryTitle>Captured Photos</GalleryTitle>
-          <GalleryGrid>
-            {imagePreviews.map((preview, index) => (
-              <div key={index} style={{ position: 'relative' }}>
-                <GalleryImage 
-                  src={preview} 
-                  alt={`Captured ${index + 1}`}
-                  onClick={() => setCurrentPreview(preview)}
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeImage(index);
-                  }}
-                  style={{
-                    position: 'absolute',
-                    top: '2px',
-                    right: '2px',
-                    background: 'rgba(0, 0, 0, 0.7)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '20px',
-                    height: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    color: 'white'
-                  }}
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
-          </GalleryGrid>
-        </GallerySection>
-      )}
-
-      {capturedImages.length === 0 && !isLoading && !cameraError && (
-        <GallerySection>
-          <GalleryTitle>No photos yet</GalleryTitle>
-          <GalleryGrid>
-            <EmptyGallery>Tap the camera button to start capturing</EmptyGallery>
-          </GalleryGrid>
-        </GallerySection>
-      )}
     </Container>
   );
 }

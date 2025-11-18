@@ -10,6 +10,8 @@ import { AddProperty } from "./Pages/AddProperty";
 import { CircleUserRound, MapPinHouse } from "lucide-react";
 import { SearchPlaces } from "./Pages/SearchPlaces";
 import { Media } from "./Pages/Media";
+import { CameraProvider } from "./context/CameraContext";
+import { TestPage } from "./Pages/TestPage";
 
 // ----- Styled Components -----
 const Container = styled.div`
@@ -57,6 +59,7 @@ function TabsLayout() {
         <Route path="/properties/:id" element={<Property />} />
         <Route path="/add-property" element={<AddProperty />} />
         <Route path="/search-places" element={<SearchPlaces />} />
+        <Route path="test-page" element={<TestPage />} />
       </Routes>
 
       {showBottomTabs && (
@@ -76,13 +79,13 @@ function TabsLayout() {
 // ----- App Root -----
 export default function App() {
   return (
-   <>
+   <CameraProvider>
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/*" element={<TabsLayout />} />
       </Routes>
     </Router>
-   </>
+   </CameraProvider>
   );
 }
