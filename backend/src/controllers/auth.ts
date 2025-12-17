@@ -19,22 +19,18 @@ export const registerUser = async (
   next: NextFunction
 ) => {
   try {
-    let user = req.body;
-    const userExist = await userExists({
-      email: user.email,
-      mobile: user.mobile,
-    });
+    let { mobile, name, surname } = req.body;
+    const userExist = await userExists({mobile});
     if (userExist) {
-      throw new ApiError(400, "Email or Mobile is alredy used");
+      throw new ApiError(400, "Mobile is alredy used");
     }
-    user = await createUser(user);
-    const userData = omit(user?.toJSON(), omitData);
-    const accessToken = sign({ ...userData });
+    
+    const user = await createUser({ mobile, name, surname });
 
     return res.status(200).json({
-      data: userData,
+      data: user,
       error: false,
-      accessToken,
+      // accessToken,
       msg: "User registered successfully",
     });
   } catch (err) {
@@ -42,28 +38,51 @@ export const registerUser = async (
   }
 };
 
+const sendUserOtp = async (user: any) => {
+  // generate otp
+  const otp = generateOTP(user.mobile);
+
+  // const send = await sendOTP(user.email, otp);
+  // send otp to email
+  // if (!send) {
+  //   throw new ApiError(400, "Failed to send OTP");
+  // }
+  return true;
+}
+
 export const loginUser = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { email, password } = req.body;
+    const { mobile, otp } = req.body;
 
-    const user = await findOneUser({ email });
+    const user = await findOneUser({ mobile });
     if (!user) {
       throw new ApiError(400, "Email id is incorrect");
     }
 
-    const validPassword = await validatePassword(user.email, password);
-    if (!validPassword) {
-      throw new ApiError(400, "Password is incorrect");
+    // const validPassword = await validatePassword(user.email, password);
+    // if (!validPassword) {
+    //   throw new ApiError(400, "Password is incorrect");
+    // }
+    // const userData = omit(user?.toJSON(), omitData);
+    // const accessToken = sign({ ...userData });
+    const isValid = verifyOTP(user.mobile, otp);
+
+    if (!isValid) {
+      return res.status(400).send({
+        error: true,
+        errorMsg: "OTP is Incorrect",
+      });
     }
+
     const userData = omit(user?.toJSON(), omitData);
     const accessToken = sign({ ...userData });
 
     return res.status(200).json({
-      data: userData,
+      data: user,
       access_token: accessToken,
       error: false,
     });
@@ -77,30 +96,30 @@ export const forgotPassword = async (
   res: Response,
   next: NextFunction
 ) => {
-  try {
-    const { email } = req.body;
+  // try {
+  //   const { email } = req.body;
 
-    let user = await findOneUser({ email });
-    if (!user) {
-      throw new ApiError(400, "Email id is incorrect");
-    }
-    user = user?.toJSON();
-    // generate otp
-    const otp = generateOTP(user.email);
+  //   let user = await findOneUser({ email });
+  //   if (!user) {
+  //     throw new ApiError(400, "Email id is incorrect");
+  //   }
+  //   user = user?.toJSON();
+  //   // generate otp
+  //   const otp = generateOTP(user.mobile);
 
-    // const send = await sendOTP(user.email, otp);
-    // send otp to email
-    // if (!send) {
-    //   throw new ApiError(400, "Failed to send OTP");
-    // }
+  //   // const send = await sendOTP(user.email, otp);
+  //   // send otp to email
+  //   // if (!send) {
+  //   //   throw new ApiError(400, "Failed to send OTP");
+  //   // }
 
-    return res.status(200).json({
-      msg: "Email sent sucessfully",
-      error: false,
-    });
-  } catch (err) {
-    next(err);
-  }
+  //   return res.status(200).json({
+  //     msg: "Email sent sucessfully",
+  //     error: false,
+  //   });
+  // } catch (err) {
+  //   next(err);
+  // }
 };
 
 export const resetPassword = async (
@@ -108,31 +127,31 @@ export const resetPassword = async (
   res: Response,
   next: NextFunction
 ) => {
-  try {
-    const { email, otp, password } = req.body;
+  // try {
+  //   const { email, otp, password } = req.body;
 
-    let user = await findOneUser({ email });
-    if (!user) {
-      throw new ApiError(400, "Email id is incorrect");
-    }
-    user = user?.toJSON();
-    const isValid = verifyOTP(user.email, otp);
+  //   let user = await findOneUser({ email });
+  //   if (!user) {
+  //     throw new ApiError(400, "Email id is incorrect");
+  //   }
+  //   user = user?.toJSON();
+  //   const isValid = verifyOTP(user.email, otp);
 
-    if (!isValid) {
-      return res.status(400).send({
-        error: true,
-        errorMsg: "OTP is Incorrect",
-      });
-    }
+  //   if (!isValid) {
+  //     return res.status(400).send({
+  //       error: true,
+  //       errorMsg: "OTP is Incorrect",
+  //     });
+  //   }
 
-    const updated = await updateUserById({ password }, user.id);
+  //   const updated = await updateUserById({ password }, user.id);
 
-    return res.status(200).json({
-      updated: updated[0],
-      msg: updated[0] ? "Password reseted successfully" : "Failed to reset",
-      error: false,
-    });
-  } catch (err) {
-    next(err);
-  }
+  //   return res.status(200).json({
+  //     updated: updated[0],
+  //     msg: updated[0] ? "Password reseted successfully" : "Failed to reset",
+  //     error: false,
+  //   });
+  // } catch (err) {
+  //   next(err);
+  // }
 };

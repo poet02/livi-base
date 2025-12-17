@@ -8,8 +8,8 @@
       "port": 3000,
       "restart": true,
       "skipFiles": ["<node_internals>/**"],
-      "localRoot": "${workspaceFolder}/typescript-node-sequelize-boilerplate",
-      "remoteRoot": "${workspaceFolder}/typescript-node-sequelize-boilerplate",
+      "localRoot": "${workspaceFolder}/backend",
+      "remoteRoot": "${workspaceFolder}/backend",
       "sourceMaps": true,
     }
   ]
