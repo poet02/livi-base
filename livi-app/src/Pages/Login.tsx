@@ -8,7 +8,7 @@ export function Login() {
 
   const handleLogin = () => {
     if (mobile.trim().length >= 10) {
-      navigate("/search-places");
+      navigate("/places");
     }
   };
 

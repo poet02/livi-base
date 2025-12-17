@@ -4,12 +4,14 @@ import styled from 'styled-components';
 import { ArrowLeft, MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail } from 'lucide-react';
 import ImageGallery from 'react-image-gallery';
 import 'react-image-gallery/styles/css/image-gallery.css';
+import { Section as BaseSection, SectionTitle as BaseSectionTitle, Button as BaseButton } from '../styles/common';
+import { media } from '../styles/common';
 
 const Container = styled.div`
-  eight: 95vh;
-    overflow-y: auto;
-  background: white;
-  color: #333;
+  height: 95vh;
+  overflow-y: auto;
+  background: ${props => props.theme.colors.background.default};
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const Header = styled.div`
@@ -21,11 +23,11 @@ const Header = styled.div`
 
 const BackButton = styled.button`
   position: absolute;
-  top: 1rem;
-  left: 1rem;
+  top: ${props => props.theme.spacing.base};
+  left: ${props => props.theme.spacing.base};
   background: rgba(255, 255, 255, 0.9);
   border: none;
-  border-radius: 50%;
+  border-radius: ${props => props.theme.borderRadius.full};
   width: 60px;
   height: 60px;
   display: flex;
@@ -33,7 +35,7 @@ const BackButton = styled.button`
   justify-content: center;
   cursor: pointer;
   z-index: 10;
-  transition: all 0.2s ease;
+  transition: all ${props => props.theme.transitions.base};
 
   &:hover {
     background: white;
@@ -43,7 +45,7 @@ const BackButton = styled.button`
   svg {
     width: 24px;
     height: 24px;
-    color: #333;
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
@@ -51,7 +53,7 @@ const PropertyImage = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform ${props => props.theme.transitions.slow};
 
   &:hover {
     transform: scale(1.02);
@@ -64,28 +66,28 @@ const ImageOverlay = styled.div`
   left: 0;
   right: 0;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
-  padding: 2rem 1.5rem 1.5rem;
+  padding: ${props => props.theme.spacing.xl} ${props => props.theme.spacing.lg} ${props => props.theme.spacing.lg};
   color: white;
   pointer-events: none;
 `;
 
 const Price = styled.h1`
-  margin: 0 0 0.5rem 0;
-  font-size: 2rem;
-  font-weight: 700;
+  margin: 0 0 ${props => props.theme.spacing.sm} 0;
+  font-size: ${props => props.theme.typography.fontSize['3xl']};
+  font-weight: ${props => props.theme.typography.fontWeight.bold};
 `;
 
 const Title = styled.h2`
-  margin: 0 0 0.5rem 0;
-  font-size: 1.5rem;
-  font-weight: 600;
+  margin: 0 0 ${props => props.theme.spacing.sm} 0;
+  font-size: ${props => props.theme.typography.fontSize['2xl']};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
 `;
 
 const Address = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
+  gap: ${props => props.theme.spacing.sm};
+  font-size: ${props => props.theme.typography.fontSize.base};
   opacity: 0.9;
 
   svg {
@@ -95,44 +97,42 @@ const Address = styled.div`
 `;
 
 const Content = styled.div`
-  padding: 2rem 1.5rem;
+  padding: ${props => props.theme.spacing.xl} ${props => props.theme.spacing.lg};
 `;
 
-const Section = styled.section`
-  margin-bottom: 2rem;
+const Section = styled(BaseSection)`
+  margin-bottom: ${props => props.theme.spacing.xl};
 `;
 
-const SectionTitle = styled.h3`
-  margin: 0 0 1rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #333;
+const SectionTitle = styled(BaseSectionTitle)`
+  margin: 0 0 ${props => props.theme.spacing.base} 0;
+  font-size: ${props => props.theme.typography.fontSize.xl};
 `;
 
 const DetailsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: ${props => props.theme.spacing.base};
+  margin-bottom: ${props => props.theme.spacing.xl};
 
-  @media (max-width: 768px) {
+  ${media.md`
     grid-template-columns: repeat(2, 1fr);
-  }
+  `}
 `;
 
 const DetailItem = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
+  padding: ${props => props.theme.spacing.base};
+  background: ${props => props.theme.colors.grey[50]};
+  border-radius: ${props => props.theme.borderRadius.md};
   text-align: center;
 `;
 
 const DetailIcon = styled.div`
-  color: #1976d2;
-  margin-bottom: 0.5rem;
+  color: ${props => props.theme.colors.primary.main};
+  margin-bottom: ${props => props.theme.spacing.sm};
 
   svg {
     width: 24px;
@@ -141,34 +141,34 @@ const DetailIcon = styled.div`
 `;
 
 const DetailValue = styled.span`
-  font-weight: 600;
-  font-size: 1.125rem;
-  color: #333;
-  margin-bottom: 0.25rem;
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  font-size: ${props => props.theme.typography.fontSize.lg};
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: ${props => props.theme.spacing.xs};
 `;
 
 const DetailLabel = styled.span`
-  font-size: 0.875rem;
-  color: #666;
+  font-size: ${props => props.theme.typography.fontSize.sm};
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 const Description = styled.p`
-  line-height: 1.6;
-  color: #666;
+  line-height: ${props => props.theme.typography.lineHeight.relaxed};
+  color: ${props => props.theme.colors.text.secondary};
   margin: 0;
 `;
 
 const AmenitiesGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.75rem;
+  gap: ${props => props.theme.spacing.md};
 `;
 
 const AmenityItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
+  gap: ${props => props.theme.spacing.sm};
+  padding: ${props => props.theme.spacing.sm} 0;
 `;
 
 const ActionBar = styled.div`
@@ -176,32 +176,20 @@ const ActionBar = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  background: white;
-  border-top: 1px solid #e0e0e0;
-  padding: 1rem 1.5rem;
+  background: ${props => props.theme.colors.background.default};
+  border-top: 1px solid ${props => props.theme.colors.border.light};
+  padding: ${props => props.theme.spacing.base} ${props => props.theme.spacing.lg};
   display: flex;
-  gap: 1rem;
-  z-index: 100;
+  gap: ${props => props.theme.spacing.base};
+  z-index: ${props => props.theme.zIndex.fixed};
 `;
 
-const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' }>`
+const ActionButton = styled(BaseButton)`
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: ${props => props.variant === 'primary' ? 'none' : '1px solid #e0e0e0'};
-  background: ${props => props.variant === 'primary' ? '#1976d2' : 'white'};
-  color: ${props => props.variant === 'primary' ? 'white' : '#333'};
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: ${props => props.variant === 'primary' ? '#1565c0' : '#f5f5f5'};
-  }
+  gap: ${props => props.theme.spacing.sm};
 
   svg {
     width: 20px;
@@ -213,16 +201,16 @@ const IconButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  background: ${props => props.theme.colors.background.default};
+  border: 1px solid ${props => props.theme.colors.border.light};
+  border-radius: ${props => props.theme.borderRadius.md};
   width: 48px;
   height: 48px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all ${props => props.theme.transitions.base};
 
   &:hover {
-    background: #f5f5f5;
+    background: ${props => props.theme.colors.grey[100]};
   }
 
   svg {
@@ -238,7 +226,7 @@ const GalleryModal = styled.div<{ isOpen: boolean }>`
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.95);
-  z-index: 1000;
+  z-index: ${props => props.theme.zIndex.modal};
   display: ${props => props.isOpen ? 'flex' : 'none'};
   align-items: center;
   justify-content: center;
@@ -247,21 +235,21 @@ const GalleryModal = styled.div<{ isOpen: boolean }>`
 
 const CloseGalleryButton = styled.button`
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: ${props => props.theme.spacing.xl};
+  right: ${props => props.theme.spacing.xl};
   background: rgba(255, 255, 255, 0.9);
   border: none;
-  border-radius: 50%;
+  border-radius: ${props => props.theme.borderRadius.full};
   width: 48px;
   height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 1001;
-  font-size: 1.5rem;
-  font-weight: bold;
-  transition: all 0.2s ease;
+  z-index: ${props => props.theme.zIndex.modal + 1};
+  font-size: ${props => props.theme.typography.fontSize['2xl']};
+  font-weight: ${props => props.theme.typography.fontWeight.bold};
+  transition: all ${props => props.theme.transitions.base};
 
   &:hover {
     background: white;
@@ -341,7 +329,7 @@ const mockProperty = {
 export function Property() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [property, setProperty] = useState(mockProperty);
+    const [property] = useState(mockProperty);
     const [isFavorite, setIsFavorite] = useState(false);
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
@@ -490,7 +478,7 @@ export function Property() {
 
             <ActionBar>
                 <IconButton onClick={toggleFavorite}>
-                    <Heart fill={isFavorite ? '#d32f2f' : 'none'} color={isFavorite ? '#d32f2f' : '#666'} />
+                    <Heart fill={isFavorite ? '#d32f2f' : 'none'} color={isFavorite ? '#d32f2f' : undefined} />
                 </IconButton>
                 <IconButton onClick={handleShare}>
                     <Share2 />
@@ -520,7 +508,7 @@ export function Property() {
                         showBullets={false}
                         autoPlay={false}
                         additionalClass="property-gallery"
-                        onScreenChange={(fullScreen) => {
+                        onScreenChange={() => {
                             // Handle fullscreen change if needed
                         }}
                     />

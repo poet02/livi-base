@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import styled from 'styled-components';
 import { ArrowLeft, Upload, Plus, X } from 'lucide-react';
+import { Input as BaseInput, Button as BaseButton, Label as BaseLabel, Section as BaseSection, SectionTitle as BaseSectionTitle, Card } from '../styles/common';
 
 // Mock data for editing - in real app, this would come from API
 const mockProperties = [
@@ -31,90 +32,84 @@ const mockProperties = [
   }
 ];
 
-// Reuse your existing styled components (keeping them the same)
 const Container = styled.div`
   height: 95vh;
-  background: #f5f5f5;
-  padding-bottom: 2rem;
-    overflow-y: auto;
-    color: #333;
+  background: ${props => props.theme.colors.background.paper};
+  padding-bottom: ${props => props.theme.spacing.xl};
+  overflow-y: auto;
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const Header = styled.div`
-  background: white;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  background: ${props => props.theme.colors.background.default};
+  padding: ${props => props.theme.spacing.base} ${props => props.theme.spacing.lg};
+  border-bottom: 1px solid ${props => props.theme.colors.border.light};
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: ${props => props.theme.spacing.base};
 `;
 
 const BackButton = styled.button`
   background: rgba(255, 255, 255, 0.9);
   border: none;
-  border-radius: 50%;
+  border-radius: ${props => props.theme.borderRadius.full};
   width: 60px;
   height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color ${props => props.theme.transitions.base};
 
   &:hover {
-    background: #f5f5f5;
+    background: ${props => props.theme.colors.grey[100]};
   }
 
   svg {
     width: 24px;
     height: 24px;
-    color: #333;
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
 const Title = styled.h1`
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #333;
+  font-size: ${props => props.theme.typography.fontSize['2xl']};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const FormContainer = styled.div`
   max-width: 800px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 ${props => props.theme.spacing.lg};
 `;
 
-const Form = styled.form`
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  margin-top: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+const Form = styled(Card)`
+  margin-top: ${props => props.theme.spacing.xl};
+  padding: ${props => props.theme.spacing.xl};
 `;
 
-const Section = styled.div`
-  margin-bottom: 2.5rem;
+const Section = styled(BaseSection)`
+  margin-bottom: ${props => props.theme.spacing['2xl']};
 `;
 
-const SectionTitle = styled.h2`
-  margin: 0 0 1.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #333;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #1976d2;
+const SectionTitle = styled(BaseSectionTitle)`
+  margin: 0 0 ${props => props.theme.spacing.lg} 0;
+  font-size: ${props => props.theme.typography.fontSize.xl};
+  padding-bottom: ${props => props.theme.spacing.sm};
+  border-bottom: 2px solid ${props => props.theme.colors.primary.main};
 `;
 
 const FormRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: ${props => props.theme.spacing.lg};
+  margin-bottom: ${props => props.theme.spacing.lg};
 
-  @media (max-width: 768px) {
+  @media (max-width: ${props => props.theme.breakpoints.md}) {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: ${props => props.theme.spacing.base};
   }
 `;
 
@@ -123,74 +118,74 @@ const FormGroup = styled.div`
   flex-direction: column;
 `;
 
-const Label = styled.label`
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #333;
+const Label = styled(BaseLabel)`
+  margin-bottom: ${props => props.theme.spacing.sm};
 `;
 
 const RequiredStar = styled.span`
-  color: #d32f2f;
-  margin-left: 0.25rem;
+  color: ${props => props.theme.colors.error.main};
+  margin-left: ${props => props.theme.spacing.xs};
 `;
 
-const Input = styled.input<{ hasError?: boolean }>`
-  padding: 0.75rem;
-  border: 1px solid ${props => props.hasError ? '#d32f2f' : '#e0e0e0'};
-  border-radius: 6px;
-  font-size: 1rem;
-  transition: border-color 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: ${props => props.hasError ? '#d32f2f' : '#1976d2'};
-    box-shadow: 0 0 0 2px ${props => props.hasError ? 'rgba(211, 47, 47, 0.2)' : 'rgba(25, 118, 210, 0.2)'};
-  }
+const Input = styled(BaseInput)`
+  padding: ${props => props.theme.spacing.md};
 `;
 
 const Select = styled.select<{ hasError?: boolean }>`
-  padding: 0.75rem;
-  border: 1px solid ${props => props.hasError ? '#d32f2f' : '#e0e0e0'};
-  border-radius: 6px;
-  font-size: 1rem;
-  background: white;
-  transition: border-color 0.2s ease;
+  padding: ${props => props.theme.spacing.md};
+  border: 1px solid ${props => props.hasError ? props.theme.colors.error.main : props.theme.colors.border.light};
+  border-radius: ${props => props.theme.borderRadius.base};
+  font-size: ${props => props.theme.typography.fontSize.base};
+  background: ${props => props.theme.colors.background.default};
+  transition: border-color ${props => props.theme.transitions.base};
+  font-family: inherit;
+  width: 100%;
 
   &:focus {
     outline: none;
-    border-color: ${props => props.hasError ? '#d32f2f' : '#1976d2'};
-    box-shadow: 0 0 0 2px ${props => props.hasError ? 'rgba(211, 47, 47, 0.2)' : 'rgba(25, 118, 210, 0.2)'};
+    border-color: ${props => props.hasError ? props.theme.colors.error.main : props.theme.colors.primary.main};
+    box-shadow: 0 0 0 2px ${props => 
+      props.hasError 
+        ? `${props.theme.colors.error.main}33` 
+        : `${props.theme.colors.primary.main}33`
+    };
   }
 `;
 
 const TextArea = styled.textarea<{ hasError?: boolean }>`
-  padding: 0.75rem;
-  border: 1px solid ${props => props.hasError ? '#d32f2f' : '#e0e0e0'};
-  border-radius: 6px;
-  font-size: 1rem;
+  padding: ${props => props.theme.spacing.md};
+  border: 1px solid ${props => props.hasError ? props.theme.colors.error.main : props.theme.colors.border.light};
+  border-radius: ${props => props.theme.borderRadius.base};
+  font-size: ${props => props.theme.typography.fontSize.base};
   min-height: 120px;
   resize: vertical;
-  transition: border-color 0.2s ease;
+  transition: border-color ${props => props.theme.transitions.base};
+  font-family: inherit;
+  width: 100%;
 
   &:focus {
     outline: none;
-    border-color: ${props => props.hasError ? '#d32f2f' : '#1976d2'};
-    box-shadow: 0 0 0 2px ${props => props.hasError ? 'rgba(211, 47, 47, 0.2)' : 'rgba(25, 118, 210, 0.2)'};
+    border-color: ${props => props.hasError ? props.theme.colors.error.main : props.theme.colors.primary.main};
+    box-shadow: 0 0 0 2px ${props => 
+      props.hasError 
+        ? `${props.theme.colors.error.main}33` 
+        : `${props.theme.colors.primary.main}33`
+    };
   }
 `;
 
 const CheckboxGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: ${props => props.theme.spacing.base};
 `;
 
 const CheckboxLabel = styled.label`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: ${props => props.theme.spacing.sm};
   cursor: pointer;
-  font-weight: normal;
+  font-weight: ${props => props.theme.typography.fontWeight.normal};
 
   input {
     margin: 0;
@@ -198,21 +193,21 @@ const CheckboxLabel = styled.label`
 `;
 
 const ImageUploadSection = styled.div`
-  border: 2px dashed #e0e0e0;
-  border-radius: 8px;
-  padding: 2rem;
+  border: 2px dashed ${props => props.theme.colors.border.light};
+  border-radius: ${props => props.theme.borderRadius.md};
+  padding: ${props => props.theme.spacing.xl};
   text-align: center;
-  transition: border-color 0.2s ease;
+  transition: border-color ${props => props.theme.transitions.base};
   cursor: pointer;
 
   &:hover {
-    border-color: #1976d2;
+    border-color: ${props => props.theme.colors.primary.main};
   }
 `;
 
 const UploadIcon = styled.div`
-  color: #666;
-  margin-bottom: 1rem;
+  color: ${props => props.theme.colors.text.secondary};
+  margin-bottom: ${props => props.theme.spacing.base};
 
   svg {
     width: 48px;
@@ -221,22 +216,22 @@ const UploadIcon = styled.div`
 `;
 
 const UploadText = styled.p`
-  margin: 0 0 1rem 0;
-  color: #666;
+  margin: 0 0 ${props => props.theme.spacing.base} 0;
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 const UploadButton = styled.label`
   display: inline-block;
-  background: #1976d2;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
+  background: ${props => props.theme.colors.primary.main};
+  color: ${props => props.theme.colors.primary.contrast};
+  padding: ${props => props.theme.spacing.md} ${props => props.theme.spacing.lg};
+  border-radius: ${props => props.theme.borderRadius.base};
   cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s ease;
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  transition: background-color ${props => props.theme.transitions.base};
 
   &:hover {
-    background: #1565c0;
+    background: ${props => props.theme.colors.primary.dark};
   }
 
   input {
@@ -247,13 +242,13 @@ const UploadButton = styled.label`
 const ImagePreviewGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-top: 1.5rem;
+  gap: ${props => props.theme.spacing.base};
+  margin-top: ${props => props.theme.spacing.lg};
 `;
 
 const ImagePreview = styled.div`
   position: relative;
-  border-radius: 8px;
+  border-radius: ${props => props.theme.borderRadius.md};
   overflow: hidden;
   aspect-ratio: 1;
 `;
@@ -266,18 +261,18 @@ const PreviewImage = styled.img`
 
 const RemoveImageButton = styled.button`
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+  top: ${props => props.theme.spacing.sm};
+  right: ${props => props.theme.spacing.sm};
   background: rgba(255, 255, 255, 0.9);
   border: none;
-  border-radius: 50%;
+  border-radius: ${props => props.theme.borderRadius.full};
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all ${props => props.theme.transitions.base};
 
   &:hover {
     background: white;
@@ -287,59 +282,42 @@ const RemoveImageButton = styled.button`
   svg {
     width: 16px;
     height: 16px;
-    color: #d32f2f;
+    color: ${props => props.theme.colors.error.main};
   }
 `;
 
 const AmenitiesSection = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: ${props => props.theme.spacing.base};
+  margin-top: ${props => props.theme.spacing.base};
 `;
 
 const FormActions = styled.div`
   display: flex;
-  gap: 1rem;
+  gap: ${props => props.theme.spacing.base};
   justify-content: flex-end;
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid #e0e0e0;
+  margin-top: ${props => props.theme.spacing.xl};
+  padding-top: ${props => props.theme.spacing.xl};
+  border-top: 1px solid ${props => props.theme.colors.border.light};
 `;
 
-const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
-  padding: 0.75rem 2rem;
-  border: ${props => props.variant === 'primary' ? 'none' : '1px solid #e0e0e0'};
-  background: ${props => props.variant === 'primary' ? '#1976d2' : 'white'};
-  color: ${props => props.variant === 'primary' ? 'white' : '#333'};
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: ${props => props.variant === 'primary' ? '#1565c0' : '#f5f5f5'};
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+const Button = styled(BaseButton)`
+  padding: ${props => props.theme.spacing.md} ${props => props.theme.spacing.xl};
 `;
 
 const ErrorMessage = styled.span`
-  color: #d32f2f;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
+  color: ${props => props.theme.colors.error.main};
+  font-size: ${props => props.theme.typography.fontSize.sm};
+  margin-top: ${props => props.theme.spacing.xs};
 `;
 
 const SuccessMessage = styled.div`
-  background: #2e7d32;
-  color: white;
-  padding: 1rem;
-  border-radius: 6px;
-  margin-bottom: 1rem;
+  background: ${props => props.theme.colors.success.main};
+  color: ${props => props.theme.colors.success.contrast};
+  padding: ${props => props.theme.spacing.base};
+  border-radius: ${props => props.theme.borderRadius.base};
+  margin-bottom: ${props => props.theme.spacing.base};
   text-align: center;
 `;
 

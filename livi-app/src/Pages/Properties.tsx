@@ -11,47 +11,46 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { usePropertySearch, SearchFilters } from '../hooks/usePropertySearch';
-import { PropertyCard } from '../components/PropertyCard';
-import FilterPanel from '../components/FilterPanel';
-import { Search, Filter, Plus, HousePlus, ArrowLeft } from 'lucide-react';
+import { PropertyCard } from '../Components/PropertyCard';
+import { Search, HousePlus, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Input as BaseInput } from '../styles/common';
 
 const PageContainer = styled.div`
   min-height: 100vh;
-  background-color: #f5f5f5;
-  padding: 2rem;
-    overflow-y: auto;
+  background-color: ${props => props.theme.colors.background.paper};
+  padding: ${props => props.theme.spacing.xl};
+  overflow-y: auto;
 `;
 
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: ${props => props.theme.spacing.xl};
 `;
 
 const Title = styled.h1`
   margin: 0;
-  color: #333;
+  color: ${props => props.theme.colors.text.primary};
 `;
-
 
 const SearchSection = styled.div<{ visible: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  background: white;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 50;
+  background: ${props => props.theme.colors.background.default};
+  padding: ${props => props.theme.spacing.lg};
+  box-shadow: ${props => props.theme.shadows.base};
+  z-index: ${props => props.theme.zIndex.sticky};
   transform: translateY(${props => props.visible ? '0' : '-100%'});
-  transition: transform 0.3s ease-in-out;
+  transition: transform ${props => props.theme.transitions.slow};
 `;
 
 const SearchContainer = styled.div`
   display: flex;
-  gap: 1rem;
+  gap: ${props => props.theme.spacing.base};
   align-items: center;
 `;
 
@@ -60,27 +59,16 @@ const SearchInput = styled.div`
   position: relative;
 `;
 
-const Input = styled.input`
-  width: 100%;
-  padding: 0.75rem 1rem 0.75rem 3rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #1976d2;
-    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
-  }
+const Input = styled(BaseInput)`
+  padding: ${props => props.theme.spacing.md} ${props => props.theme.spacing.base} ${props => props.theme.spacing.md} 3rem;
 `;
 
 const SearchIcon = styled(Search)`
   position: absolute;
-  left: 1rem;
+  left: ${props => props.theme.spacing.base};
   top: 50%;
   transform: translateY(-50%);
-  color: #666;
+  color: ${props => props.theme.colors.text.secondary};
   width: 20px;
   height: 20px;
 `;
@@ -88,16 +76,16 @@ const SearchIcon = styled(Search)`
 const FilterButton = styled.button<{ active?: boolean }>`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: ${props => props.active ? '#1976d2' : 'white'};
-  color: ${props => props.active ? 'white' : '#333'};
-  border: 1px solid #e0e0e0;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
+  gap: ${props => props.theme.spacing.sm};
+  background: ${props => props.active ? props.theme.colors.primary.main : props.theme.colors.background.default};
+  color: ${props => props.active ? props.theme.colors.primary.contrast : props.theme.colors.text.primary};
+  border: 1px solid ${props => props.theme.colors.border.light};
+  padding: ${props => props.theme.spacing.md} ${props => props.theme.spacing.lg};
+  border-radius: ${props => props.theme.borderRadius.md};
+  font-size: ${props => props.theme.typography.fontSize.base};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: ${props => props.theme.transitions.base};
 
   &:hover {
     background: ${props => props.active ? '#1565c0' : '#f5f5f5'};
@@ -110,83 +98,79 @@ const FilterButton = styled.button<{ active?: boolean }>`
 `;
 
 const ResultsSection = styled.div`
-  margin-bottom: 2rem;
-  padding-top: 1rem;
+  margin-bottom: ${props => props.theme.spacing.xl};
+  padding-top: ${props => props.theme.spacing.base};
 `;
 
 const ResultsHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: ${props => props.theme.spacing.base};
 `;
 
 const ResultsCount = styled.p`
   margin: 0;
-  color: #666;
-  font-size: 1rem;
+  color: ${props => props.theme.colors.text.secondary};
+  font-size: ${props => props.theme.typography.fontSize.base};
 `;
 
 const PropertiesGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+  gap: ${props => props.theme.spacing.lg};
 `;
 
 const LoadingMessage = styled.div`
   text-align: center;
-  padding: 3rem;
-  color: #666;
-  font-size: 1.125rem;
+  padding: ${props => props.theme.spacing['3xl']};
+  color: ${props => props.theme.colors.text.secondary};
+  font-size: ${props => props.theme.typography.fontSize.lg};
 `;
 
 const EmptyMessage = styled.div`
   text-align: center;
-  padding: 3rem;
-  color: #666;
-  font-size: 1.125rem;
+  padding: ${props => props.theme.spacing['3xl']};
+  color: ${props => props.theme.colors.text.secondary};
+  font-size: ${props => props.theme.typography.fontSize.lg};
 `;
 
 const IconSection = styled.div`
-display: flex;
-justify-content: space-between;
-align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const BackButton = styled.button`
   border: none;
   background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
+  border-radius: ${props => props.theme.borderRadius.full};
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all ${props => props.theme.transitions.base};
 
   &:hover {
     background: rgba(255, 255, 255, 1);
     transform: scale(1.1);
   }
-
 `;
 
 const Icon = styled.button`
-  top: 1rem;
-  left: 1rem;
   border: none;
   background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
+  border-radius: ${props => props.theme.borderRadius.full};
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all ${props => props.theme.transitions.base};
 
   &:hover {
     background: rgba(255, 255, 255, 1);
     transform: scale(1.1);
   }
-
 `;
 
 export const Properties: React.FC = () => {
@@ -268,7 +252,7 @@ export const Properties: React.FC = () => {
 
   const handleAddProperty = () => {
     console.log('Add property clicked');
-    navigate('/add-property');
+    navigate('/properties/add');
     // Open add property modal or navigate to form
   };
 
