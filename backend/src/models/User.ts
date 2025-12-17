@@ -5,17 +5,18 @@ import sequelizeConnection from "../db/connection";
 class User extends Model {
   public id!: number;
   public name!: string;
-  public email!: string;
-  public password!: string;
+  public surname!: string;
+  // public email!: string;
+  // public password!: string;
   public mobile!: string;
 
-  public status!: boolean;
+  // public status!: boolean;
 
   // timestamps!
-  public readonly created_at!: Date;
-  public readonly last_updated!: Date;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 
-  static validPassword: (password: string, hash: string) => boolean;
+  // static validPassword: (password: string, hash: string) => boolean;
 }
 
 User.init(
@@ -27,35 +28,61 @@ User.init(
     },
     name: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
-    email: {
+    surname: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    // email: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true,
+    //   unique: true,
+    // },
+    mobile: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
     },
-    password: {
-      type: DataTypes.STRING,
-    },
-    status: {
+    regionId: {
       type: DataTypes.INTEGER,
-      defaultValue: 1,
+      allowNull: true,
+      references: {
+        model: "regions",
+        key: "id",
+      },
     },
-    role: {
-      type: DataTypes.INTEGER,
-      defaultValue: 2,
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    
+    // password: {
+    //   type: DataTypes.STRING,
+    // },
+    // status: {
+    //   type: DataTypes.INTEGER,
+    //   defaultValue: 1,
+    // },
+    // role: {
+    //   type: DataTypes.INTEGER,
+    //   defaultValue: 2,
+    // },
   },
   {
     sequelize: sequelizeConnection,
     tableName: "users",
-    createdAt: "created_at",
-    updatedAt: "last_updated",
   }
 );
 
-User.validPassword = (password: string, hash: string) => {
-  return compareSync(password, hash);
-};
+// User.validPassword = (password: string, hash: string) => {
+//   return compareSync(password, hash);
+// };
 
 export default User;

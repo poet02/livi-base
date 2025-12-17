@@ -1,13 +1,14 @@
 import Joi from "joi";
 
 export const registerSchema = Joi.object({
-  name: Joi.string().min(3).max(30).required(),
-  username: Joi.string(),
-  email: Joi.string().email().required(),
-  mobile: Joi.string().min(10),
-  password: Joi.string().min(8).required(),
-  confirm_password: Joi.string().min(8),
-  country_code: Joi.string(),
+  name: Joi.string(),
+  surname: Joi.string(),
+  // username: Joi.string(),
+  // email: Joi.string().email().required(),
+  mobile: Joi.string().min(9).required(),
+  // password: Joi.string().min(8).required(),
+  // confirm_password: Joi.string().min(8),
+  countryCode: Joi.string(),
 });
 
 export const loginSchema = Joi.object({

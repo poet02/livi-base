@@ -2,38 +2,40 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Search, Filter, MapPin, Navigation } from 'lucide-react';
+import { Search, Filter, Navigation } from 'lucide-react';
 import { usePlaceSearch } from '../hooks/usePlaceSearch';
 import { PlacesFilterPanel } from '../Components/PlacesFilterPanel';
 import { PlaceCard } from '../Components/PlaceCard';
 import { popularDestinations } from '../data/mockPlaces';
+import { Input as BaseInput, Button as BaseButton } from '../styles/common';
+import { media } from '../styles/common';
 
 const Container = styled.div`
   height: 100vh;
-    overflow-y: auto;
-  background: #f5f5f5;
-  color: #333;
+  overflow-y: auto;
+  background: ${props => props.theme.colors.background.paper};
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const Header = styled.div`
-  background: white;
-  padding: 2rem 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  background: ${props => props.theme.colors.background.default};
+  padding: ${props => props.theme.spacing.xl} ${props => props.theme.spacing.lg};
+  border-bottom: 1px solid ${props => props.theme.colors.border.light};
 `;
 
 const Title = styled.h1`
-  margin: 0 0 1rem 0;
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #333;
+  margin: 0 0 ${props => props.theme.spacing.base} 0;
+  font-size: ${props => props.theme.typography.fontSize['4xl']};
+  font-weight: ${props => props.theme.typography.fontWeight.bold};
+  color: ${props => props.theme.colors.text.primary};
   text-align: center;
 `;
 
 const Subtitle = styled.p`
-  margin: 0 0 2rem 0;
-  color: #666;
+  margin: 0 0 ${props => props.theme.spacing.xl} 0;
+  color: ${props => props.theme.colors.text.secondary};
   text-align: center;
-  font-size: 1.125rem;
+  font-size: ${props => props.theme.typography.fontSize.lg};
 `;
 
 const SearchSection = styled.div`
@@ -43,12 +45,12 @@ const SearchSection = styled.div`
 
 const SearchContainer = styled.div`
   display: flex;
-  gap: 1rem;
+  gap: ${props => props.theme.spacing.base};
   align-items: stretch;
 
-  @media (max-width: 768px) {
+  ${media.md`
     flex-direction: column;
-  }
+  `}
 `;
 
 const SearchInput = styled.div`
@@ -56,49 +58,25 @@ const SearchInput = styled.div`
   position: relative;
 `;
 
-const Input = styled.input`
-  width: 100%;
-  padding: 1rem 1rem 1rem 3rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #1976d2;
-    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
-  }
+const Input = styled(BaseInput)`
+  padding: ${props => props.theme.spacing.base} ${props => props.theme.spacing.base} ${props => props.theme.spacing.base} 3rem;
 `;
 
 const SearchIcon = styled(Search)`
   position: absolute;
-  left: 1rem;
+  left: ${props => props.theme.spacing.base};
   top: 50%;
   transform: translateY(-50%);
-  color: #666;
+  color: ${props => props.theme.colors.text.secondary};
   width: 20px;
   height: 20px;
 `;
 
-const LocationButton = styled.button`
+const LocationButton = styled(BaseButton).attrs({ variant: 'secondary' })`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: white;
-  border: 1px solid #e0e0e0;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  gap: ${props => props.theme.spacing.sm};
   white-space: nowrap;
-
-  &:hover {
-    background: #f5f5f5;
-    border-color: #1976d2;
-  }
 
   svg {
     width: 20px;
@@ -106,28 +84,10 @@ const LocationButton = styled.button`
   }
 `;
 
-const SearchButton = styled.button`
+const SearchButton = styled(BaseButton).attrs({ variant: 'primary' })`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: #1976d2;
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-
-  &:hover {
-    background: #1565c0;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+  gap: ${props => props.theme.spacing.sm};
 
   svg {
     width: 20px;
@@ -138,19 +98,19 @@ const SearchButton = styled.button`
 const FilterButton = styled.button<{ active?: boolean }>`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: ${props => props.active ? '#1976d2' : 'white'};
-  color: ${props => props.active ? 'white' : '#333'};
-  border: 1px solid #e0e0e0;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
+  gap: ${props => props.theme.spacing.sm};
+  background: ${props => props.active ? props.theme.colors.primary.main : props.theme.colors.background.default};
+  color: ${props => props.active ? props.theme.colors.primary.contrast : props.theme.colors.text.primary};
+  border: 1px solid ${props => props.theme.colors.border.light};
+  padding: ${props => props.theme.spacing.base} ${props => props.theme.spacing.lg};
+  border-radius: ${props => props.theme.borderRadius.md};
+  font-size: ${props => props.theme.typography.fontSize.base};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: ${props => props.theme.transitions.base};
 
   &:hover {
-    background: ${props => props.active ? '#1565c0' : '#f5f5f5'};
+    background: ${props => props.active ? props.theme.colors.primary.dark : props.theme.colors.grey[100]};
   }
 
   svg {
@@ -161,85 +121,89 @@ const FilterButton = styled.button<{ active?: boolean }>`
 
 const ActionsRow = styled.div`
   display: flex;
-  gap: 1rem;
+  gap: ${props => props.theme.spacing.base};
   align-items: center;
-  margin-top: 1rem;
+  margin-top: ${props => props.theme.spacing.base};
   justify-content: center;
+`;
+
+const ClearButton = styled(BaseButton).attrs({ variant: 'outline' })`
+  padding: ${props => props.theme.spacing.base} ${props => props.theme.spacing.lg};
 `;
 
 const Content = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: ${props => props.theme.spacing.xl} ${props => props.theme.spacing.lg};
 `;
 
 const ResultsSection = styled.div`
-  margin-bottom: 3rem;
+  margin-bottom: ${props => props.theme.spacing['3xl']};
 `;
 
 const ResultsHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: ${props => props.theme.spacing.lg};
 `;
 
 const ResultsTitle = styled.h2`
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #333;
+  font-size: ${props => props.theme.typography.fontSize['2xl']};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const ResultsCount = styled.p`
   margin: 0;
-  color: #666;
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 const PlacesGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+  gap: ${props => props.theme.spacing.lg};
 `;
 
 const LoadingMessage = styled.div`
   text-align: center;
-  padding: 3rem;
-  color: #666;
-  font-size: 1.125rem;
+  padding: ${props => props.theme.spacing['3xl']};
+  color: ${props => props.theme.colors.text.secondary};
+  font-size: ${props => props.theme.typography.fontSize.lg};
 `;
 
 const EmptyMessage = styled.div`
   text-align: center;
-  padding: 3rem;
-  color: #666;
-  font-size: 1.125rem;
+  padding: ${props => props.theme.spacing['3xl']};
+  color: ${props => props.theme.colors.text.secondary};
+  font-size: ${props => props.theme.typography.fontSize.lg};
 `;
 
 const SuggestionsSection = styled.div`
-  margin-top: 3rem;
+  margin-top: ${props => props.theme.spacing['3xl']};
 `;
 
 const SuggestionsTitle = styled.h2`
-  margin: 0 0 1.5rem 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #333;
+  margin: 0 0 ${props => props.theme.spacing.lg} 0;
+  font-size: ${props => props.theme.typography.fontSize['2xl']};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  color: ${props => props.theme.colors.text.primary};
   text-align: center;
 `;
 
 const DestinationsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  gap: ${props => props.theme.spacing.lg};
 `;
 
 const DestinationCard = styled.div`
   position: relative;
-  border-radius: 12px;
+  border-radius: ${props => props.theme.borderRadius.lg};
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: transform ${props => props.theme.transitions.slow};
 
   &:hover {
     transform: translateY(-4px);
@@ -258,20 +222,20 @@ const DestinationOverlay = styled.div`
   left: 0;
   right: 0;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
-  padding: 1.5rem;
+  padding: ${props => props.theme.spacing.lg};
   color: white;
 `;
 
 const DestinationName = styled.h3`
-  margin: 0 0 0.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
+  margin: 0 0 ${props => props.theme.spacing.sm} 0;
+  font-size: ${props => props.theme.typography.fontSize.xl};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
 `;
 
 const DestinationCount = styled.p`
   margin: 0;
   opacity: 0.9;
-  font-size: 0.875rem;
+  font-size: ${props => props.theme.typography.fontSize.sm};
 `;
 
 export function SearchPlaces() {
@@ -377,19 +341,9 @@ export function SearchPlaces() {
                         </FilterButton>
 
                         {hasSearched && (
-                            <button
-                                onClick={clearSearch}
-                                style={{
-                                    background: 'none',
-                                    border: '1px solid #e0e0e0',
-                                    padding: '1rem 1.5rem',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    color: '#666'
-                                }}
-                            >
+                            <ClearButton onClick={clearSearch}>
                                 Clear Search
-                            </button>
+                            </ClearButton>
                         )}
                     </ActionsRow>
                 </SearchSection>

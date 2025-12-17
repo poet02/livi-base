@@ -16,7 +16,7 @@ const mockProperties = [
     zipCode: '10001',
     bedrooms: 2,
     bathrooms: 2,
-    sqft: 1200,
+    sqmt: 1200,
     type: 'apartment',
     yearBuilt: 2018,
     parking: 1,
@@ -353,7 +353,7 @@ interface PropertyFormData {
   zipCode: string;
   bedrooms: number;
   bathrooms: number;
-  sqft: number;
+  sqmt: number;
   type: 'apartment' | 'house' | 'condo';
   yearBuilt?: number;
   parking?: number;
@@ -398,7 +398,7 @@ const defaultValues: PropertyFormData = {
   zipCode: '',
   bedrooms: 0,
   bathrooms: 0,
-  sqft: 0,
+  sqmt: 0,
   type: 'apartment',
   yearBuilt: undefined,
   parking: undefined,
@@ -451,7 +451,7 @@ export function AddProperty() {
           zipCode: propertyToEdit.zipCode,
           bedrooms: propertyToEdit.bedrooms,
           bathrooms: propertyToEdit.bathrooms,
-          sqft: propertyToEdit.sqft,
+          sqmt: propertyToEdit.sqmt,
           type: propertyToEdit.type as 'apartment' | 'house' | 'condo',
           yearBuilt: propertyToEdit.yearBuilt,
           parking: propertyToEdit.parking,
@@ -526,6 +526,7 @@ export function AddProperty() {
         isEditMode,
         propertyId: id
       });
+      
 
       // Show success message
       setShowSuccess(true);
@@ -609,7 +610,7 @@ export function AddProperty() {
             <FormRow>
               <FormGroup>
                 <Label>
-                  Price ($) <RequiredStar>*</RequiredStar>
+                  Price (R) <RequiredStar>*</RequiredStar>
                 </Label>
                 <Input
                   type="number"
@@ -683,12 +684,12 @@ export function AddProperty() {
 
               <FormGroup>
                 <Label>
-                  State <RequiredStar>*</RequiredStar>
+                  Province <RequiredStar>*</RequiredStar>
                 </Label>
                 <Input
                   {...register('state', {
                     required: 'State is required',
-                    pattern: { value: /^[A-Za-z]{2}$/, message: 'State must be 2 letters' }
+                    // pattern: { value: /^[A-Za-z]{2}$/, message: 'State must be 2 letters' }
                   })}
                   placeholder="NY"
                   maxLength={2}
@@ -753,18 +754,18 @@ export function AddProperty() {
 
               <FormGroup>
                 <Label>
-                  Square Feet <RequiredStar>*</RequiredStar>
+                  Square Meters <RequiredStar>*</RequiredStar>
                 </Label>
                 <Input
                   type="number"
-                  {...register('sqft', {
+                  {...register('sqmt', {
                     required: 'Square footage is required',
                     min: { value: 1, message: 'Square footage must be greater than 0' }
                   })}
                   placeholder="1200"
-                  hasError={!!errors.sqft}
+                  hasError={!!errors.sqmt}
                 />
-                {errors.sqft && <ErrorMessage>{errors.sqft.message}</ErrorMessage>}
+                {errors.sqmt && <ErrorMessage>{errors.sqmt.message}</ErrorMessage>}
               </FormGroup>
 
               <FormGroup>

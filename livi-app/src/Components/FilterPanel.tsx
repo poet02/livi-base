@@ -2,6 +2,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { FilterOptions } from '../hooks/usePropertySearch';
+import { Input as BaseInput, Button as BaseButton, Label as BaseLabel, Section as BaseSection, SectionTitle as BaseSectionTitle } from '../styles/common';
 
 const Overlay = styled.div<{ isOpen: boolean }>`
   position: fixed;
@@ -9,11 +10,11 @@ const Overlay = styled.div<{ isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: ${props => props.theme.colors.background.overlay};
   opacity: ${props => props.isOpen ? 1 : 0};
   visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
-  transition: all 0.3s ease;
-  z-index: 1000;
+  transition: ${props => props.theme.transitions.slow};
+  z-index: ${props => props.theme.zIndex.modalBackdrop};
 `;
 
 const Panel = styled.div<{ isOpen: boolean }>`
@@ -23,11 +24,11 @@ const Panel = styled.div<{ isOpen: boolean }>`
   bottom: 0;
   width: 400px;
   max-width: 90vw;
-  background: white;
+  background: ${props => props.theme.colors.background.default};
   transform: translateX(${props => props.isOpen ? '0' : '100%'});
-  transition: transform 0.3s ease;
-  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
-  z-index: 1001;
+  transition: transform ${props => props.theme.transitions.slow};
+  box-shadow: ${props => props.theme.shadows.lg};
+  z-index: ${props => props.theme.zIndex.modal};
   display: flex;
   flex-direction: column;
 `;
@@ -36,105 +37,67 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  padding: ${props => props.theme.spacing.lg};
+  border-bottom: 1px solid ${props => props.theme.colors.border.light};
 `;
 
 const Title = styled.h2`
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #333;
+  font-size: ${props => props.theme.typography.fontSize['2xl']};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const CloseButton = styled.button`
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: ${props => props.theme.typography.fontSize['2xl']};
   cursor: pointer;
-  color: #666;
-  padding: 0.5rem;
+  color: ${props => props.theme.colors.text.secondary};
+  padding: ${props => props.theme.spacing.sm};
+  transition: color ${props => props.theme.transitions.base};
 
   &:hover {
-    color: #333;
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
 const Content = styled.div`
   flex: 1;
-  padding: 1.5rem;
+  padding: ${props => props.theme.spacing.lg};
   overflow-y: auto;
 `;
 
-const Section = styled.div`
-  margin-bottom: 2rem;
+const Section = styled(BaseSection)`
+  margin-bottom: ${props => props.theme.spacing.xl};
 `;
 
-const SectionTitle = styled.h3`
-  margin: 0 0 1rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #333;
+const SectionTitle = styled(BaseSectionTitle)`
+  margin: 0 0 ${props => props.theme.spacing.base} 0;
+  font-size: ${props => props.theme.typography.fontSize.lg};
 `;
 
 const InputGroup = styled.div`
-  margin-bottom: 1rem;
+  margin-bottom: ${props => props.theme.spacing.base};
 `;
 
-const Label = styled.label`
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #333;
+const Label = styled(BaseLabel)`
+  margin-bottom: ${props => props.theme.spacing.sm};
 `;
 
-const Input = styled.input`
+const Input = styled(BaseInput)`
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 1rem;
-
-  &:focus {
-    outline: none;
-    border-color: #1976d2;
-    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
-  }
 `;
 
 const Actions = styled.div`
-  padding: 1.5rem;
-  border-top: 1px solid #e0e0e0;
+  padding: ${props => props.theme.spacing.lg};
+  border-top: 1px solid ${props => props.theme.colors.border.light};
   display: flex;
-  gap: 1rem;
+  gap: ${props => props.theme.spacing.base};
 `;
 
-const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
+const Button = styled(BaseButton)`
   flex: 1;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  ${props => props.variant === 'primary' ? `
-    background: #1976d2;
-    color: white;
-
-    &:hover {
-      background: #1565c0;
-    }
-  ` : `
-    background: #f5f5f5;
-    color: #333;
-    border: 1px solid #e0e0e0;
-
-    &:hover {
-      background: #e0e0e0;
-    }
-  `}
 `;
 
 interface FilterPanelProps {

@@ -1,18 +1,16 @@
 import styled from 'styled-components';
 import { PlaceToStay } from '../types/search';
 import { Star, MapPin } from 'lucide-react';
+import { Card as BaseCard } from '../styles/common';
 
-const Card = styled.div`
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+const Card = styled(BaseCard)`
   overflow: hidden;
-  transition: all 0.3s ease;
   cursor: pointer;
+  padding: 0;
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: ${props => props.theme.shadows.lg};
   }
 `;
 
@@ -24,48 +22,48 @@ const Image = styled.img`
 
 const Badge = styled.div<{ featured?: boolean }>`
   position: absolute;
-  top: 12px;
-  left: 12px;
-  background: ${props => props.featured ? '#d32f2f' : '#1976d2'};
+  top: ${props => props.theme.spacing.base};
+  left: ${props => props.theme.spacing.base};
+  background: ${props => props.featured ? props.theme.colors.error.main : props.theme.colors.primary.main};
   color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: ${props => props.theme.spacing.xs} ${props => props.theme.spacing.sm};
+  border-radius: ${props => props.theme.borderRadius.base};
+  font-size: ${props => props.theme.typography.fontSize.xs};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
 `;
 
 const Content = styled.div`
-  padding: 1.5rem;
+  padding: ${props => props.theme.spacing.lg};
 `;
 
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.5rem;
+  margin-bottom: ${props => props.theme.spacing.sm};
 `;
 
 const Price = styled.div`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1976d2;
+  font-size: ${props => props.theme.typography.fontSize['2xl']};
+  font-weight: ${props => props.theme.typography.fontWeight.bold};
+  color: ${props => props.theme.colors.primary.main};
 `;
 
 const Title = styled.h3`
-  margin: 0 0 0.5rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #333;
+  margin: 0 0 ${props => props.theme.spacing.sm} 0;
+  font-size: ${props => props.theme.typography.fontSize.lg};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  color: ${props => props.theme.colors.text.primary};
   flex: 1;
 `;
 
 const Address = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: #666;
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
+  gap: ${props => props.theme.spacing.sm};
+  color: ${props => props.theme.colors.text.secondary};
+  font-size: ${props => props.theme.typography.fontSize.sm};
+  margin-bottom: ${props => props.theme.spacing.base};
 
   svg {
     width: 16px;
@@ -76,27 +74,27 @@ const Address = styled.div`
 const Rating = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: ${props => props.theme.spacing.sm};
+  margin-bottom: ${props => props.theme.spacing.base};
 `;
 
 const Stars = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: ${props => props.theme.spacing.xs};
 `;
 
 const ReviewCount = styled.span`
-  color: #666;
-  font-size: 0.875rem;
+  color: ${props => props.theme.colors.text.secondary};
+  font-size: ${props => props.theme.typography.fontSize.sm};
 `;
 
 const Details = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #e0e0e0;
-  padding-top: 1rem;
+  border-top: 1px solid ${props => props.theme.colors.border.light};
+  padding-top: ${props => props.theme.spacing.base};
 `;
 
 const DetailItem = styled.div`
@@ -107,23 +105,23 @@ const DetailItem = styled.div`
 `;
 
 const DetailValue = styled.span`
-  font-weight: 600;
-  color: #333;
-  font-size: 1rem;
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  color: ${props => props.theme.colors.text.primary};
+  font-size: ${props => props.theme.typography.fontSize.base};
 `;
 
 const DetailLabel = styled.span`
-  font-size: 0.75rem;
-  color: #666;
-  margin-top: 0.25rem;
+  font-size: ${props => props.theme.typography.fontSize.xs};
+  color: ${props => props.theme.colors.text.secondary};
+  margin-top: ${props => props.theme.spacing.xs};
 `;
 
 const Distance = styled.div`
-  background: #f5f5f5;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  color: #666;
+  background: ${props => props.theme.colors.grey[100]};
+  padding: ${props => props.theme.spacing.xs} ${props => props.theme.spacing.sm};
+  border-radius: ${props => props.theme.borderRadius.sm};
+  font-size: ${props => props.theme.typography.fontSize.xs};
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 const ImageContainer = styled.div`

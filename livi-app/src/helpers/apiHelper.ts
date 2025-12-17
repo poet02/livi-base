@@ -24,7 +24,8 @@ export interface RequestOptions {
 }
 
 // Environment configuration
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7000/api';
+console.log('Using API Base URL:', API_BASE_URL);
 
 // Helper function to get auth token (modify based on your auth setup)
 const getAuthToken = (): string | null => {
@@ -60,6 +61,7 @@ export const apiRequest = async <T = any>(
   } = options;
 
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  console.log(`API Request: ${method} ${url}`);
   const headers = getHeaders(customHeaders);
 
   const config: RequestInit = {

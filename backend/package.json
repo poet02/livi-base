@@ -40,6 +40,7 @@
     "express": "^4.18.2",
     "joi": "^17.6.4",
     "jsonwebtoken": "^9.0.2",
+    "libphonenumber-js": "^1.12.31",
     "lodash": "^4.17.21",
     "morgan": "^1.10.0",
     "nodemailer": "^6.6.1",

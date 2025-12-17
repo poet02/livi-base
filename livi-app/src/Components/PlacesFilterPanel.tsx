@@ -279,7 +279,7 @@ export function PlacesFilterPanel({
             <SectionTitle>Price Range (per night)</SectionTitle>
             <RangeInputs>
               <InputGroup>
-                <Label>Min Price ($)</Label>
+                <Label>Min Price (R)</Label>
                 <Input
                   type="number"
                   value={filters.minPrice}
@@ -288,7 +288,7 @@ export function PlacesFilterPanel({
                 />
               </InputGroup>
               <InputGroup>
-                <Label>Max Price ($)</Label>
+                <Label>Max Price (R)</Label>
                 <Input
                   type="number"
                   value={filters.maxPrice}

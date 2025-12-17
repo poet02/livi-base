@@ -3,7 +3,7 @@ import User from "../models/User";
 import { Op } from "sequelize";
 
 export const createUser = async (payload: any) => {
-  payload.password = encryptSync(payload.password);
+  // payload.password = encryptSync(payload.password);
   const user = await User.create(payload);
   return user;
 };
@@ -19,25 +19,28 @@ export const getUserById = async (id: number) => {
 };
 
 export const userExists = async (
-  options: { email: string | null; mobile: string | null } = {
-    email: null,
+  options: { mobile: string } = {
     mobile: null,
   }
 ) => {
-  if (!options.email) {
-    throw new Error("Please provide either of these options: email");
-  }
+  // if (!options.email) {
+  //   throw new Error("Please provide either of these options: email");
+  // }
   const where: any = {
     [Op.or]: [],
   };
-  if (options.email) {
-    where[Op.or].push({ email: options.email });
-  }
+  // if (options.email) {
+  //   where[Op.or].push({ email: options.email });
+  // }
   if (options.mobile) {
-    where[Op.or].push({ email: options.mobile });
+    where[Op.or].push({ mobile: options.mobile });
   }
 
-  const users = await User.findAll({ where: where });
+  const users = await User.findAll({
+    where: {
+      mobile: options.mobile
+    }
+  });
   return users.length > 0;
 };
 
@@ -54,51 +57,52 @@ export const validatePassword = async (email: string, password: string) => {
   }
 
   const user = await User.findOne({ where });
+  return true
 
-  return User.validPassword(password, user.password);
+  // return User.validPassword(password, user.password);
 };
 
-export const findOneUser = async (options: any) => {
-  if (!options.email && !options.id) {
-    throw new Error("Please provide email or id ");
-  }
-  const where = {
-    [Op.or]: [] as any,
-  };
+// export const findOneUser = async (options: any) => {
+//   if (!options.email && !options.id) {
+//     throw new Error("Please provide email or id ");
+//   }
+//   const where = {
+//     [Op.or]: [] as any,
+//   };
 
-  if (options.email) {
-    where[Op.or].push({ email: options.email });
-  }
-  if (options.id) {
-    where[Op.or].push({ id: options.id });
-  }
+//   if (options.email) {
+//     where[Op.or].push({ email: options.email });
+//   }
+//   if (options.id) {
+//     where[Op.or].push({ id: options.id });
+//   }
 
-  const user = await User.findOne({
-    where,
-    attributes: { exclude: ["password"] },
-  });
-  return user;
-};
+//   const user = await User.findOne({
+//     where,
+//     attributes: { exclude: ["password"] },
+//   });
+//   return user;
+// };
 
-export const updateUserById = (user: any, userId: number) => {
-  if (!user && !userId) {
-    throw new Error("Please provide user data and/or user id to update");
-  }
-  if (userId && isNaN(userId)) {
-    throw new Error("Invalid user id");
-  }
-  if (user.id || userId) {
-    const id = user.id || userId;
+// export const updateUserById = (user: any, userId: number) => {
+//   if (!user && !userId) {
+//     throw new Error("Please provide user data and/or user id to update");
+//   }
+//   if (userId && isNaN(userId)) {
+//     throw new Error("Invalid user id");
+//   }
+//   if (user.id || userId) {
+//     const id = user.id || userId;
 
-    if (user.password) {
-      user.password = encryptSync(user.password);
-    }
+//     if (user.password) {
+//       user.password = encryptSync(user.password);
+//     }
 
-    return User.update(user, {
-      where: { id: id },
-    });
-  }
-};
+//     return User.update(user, {
+//       where: { id: id },
+//     });
+//   }
+// };
 
 export const deleteUserById = (userId: number) => {
   if (!userId) {

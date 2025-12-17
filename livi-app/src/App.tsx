@@ -12,6 +12,7 @@ import { SearchPlaces } from "./Pages/SearchPlaces";
 import { Media } from "./Pages/Media";
 import { CameraProvider } from "./context/CameraContext";
 import { TestPage } from "./Pages/TestPage";
+import { Registration } from "./Pages/Registration";
 
 // ----- Styled Components -----
 const Container = styled.div`
@@ -24,8 +25,7 @@ const Container = styled.div`
 const BottomTabs = styled.div`
   display: flex;
   justify-content: space-around;
-  // padding: 10px 0;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid ${props => props.theme.colors.border.light};
 `;
 
 const Tab = styled.div`
@@ -37,11 +37,16 @@ const Tab = styled.div`
 
 //take in current as prop
 const StyledTab = styled(Tab)<{ active?: boolean }>`
-  font-weight: ${(props) => (props.active ? "bold" : "normal")};
-  border-bottom: ${(props) => (props.active ? "2px solid purple" : "none")};
-  background-color: ${(props) => (props.active ? "darkviolet" : "transparent")};
-  border-radius: 8px;
-  color: ${(props) => (props.active ? "white" : "black")};
+  font-weight: ${(props) => (props.active ? props.theme.typography.fontWeight.bold : props.theme.typography.fontWeight.normal)};
+  border-bottom: ${(props) => (props.active ? `2px solid ${props.theme.colors.primary.main}` : "none")};
+  background-color: ${(props) => (props.active ? props.theme.colors.primary.main : "transparent")};
+  border-radius: ${props => props.theme.borderRadius.md};
+  color: ${(props) => (props.active ? props.theme.colors.primary.contrast : props.theme.colors.text.primary)};
+  transition: ${props => props.theme.transitions.base};
+  
+  &:hover {
+    background-color: ${(props) => (props.active ? props.theme.colors.primary.dark : props.theme.colors.grey[100])};
+  }
 `;
 
 // ----- Tabs Wrapper -----
@@ -49,22 +54,23 @@ function TabsLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const current = location.pathname;
-  const showBottomTabs = (current === "/profile" || current === "/search-places");
+  const showBottomTabs = (current === "/profile" || current === "/places");
   return (
     <Container>
       <Routes>
         <Route path="/media" element={<Media />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/register" element={<Registration />} />
         <Route path="/properties" element={<Properties />} />
         <Route path="/properties/:id" element={<Property />} />
-        <Route path="/add-property" element={<AddProperty />} />
-        <Route path="/search-places" element={<SearchPlaces />} />
+        <Route path="/properties/add" element={<AddProperty />} />
+        <Route path="/places" element={<SearchPlaces />} />
         <Route path="test-page" element={<TestPage />} />
       </Routes>
 
       {showBottomTabs && (
         <BottomTabs>
-          <StyledTab onClick={() => navigate("/search-places")} active={current === "/search-places"}>
+          <StyledTab onClick={() => navigate("/places")} active={current === "/places"}>
             <MapPinHouse size={24} />
           </StyledTab>
           <StyledTab onClick={() => navigate("/profile")} active={current === "/profile"}>

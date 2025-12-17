@@ -1,24 +1,48 @@
-// components/PropertyCard.tsx
+/**
+ * EXAMPLE: Refactored PropertyCard using the new design system
+ * 
+ * This shows how to refactor existing components to use:
+ * 1. Theme values instead of hardcoded colors/spacing
+ * 2. Common styled components when possible
+ * 3. Consistent patterns
+ * 
+ * Compare this with the original PropertyCard.tsx
+ */
+
 import React from 'react';
 import styled from 'styled-components';
 import { Property } from '../hooks/usePropertySearch';
 import { Card } from '../styles/common';
+import { theme } from '../theme';
 
+// Use shared Card component with customization
 const PropertyCardContainer = styled(Card)`
   overflow: hidden;
   cursor: pointer;
   padding: 0;
-
+  
   &:hover {
     transform: translateY(-4px);
     box-shadow: ${props => props.theme.shadows.lg};
   }
 `;
 
-const Image = styled.img`
+const ImageContainer = styled.div`
+  position: relative;
   width: 100%;
   height: 200px;
+  overflow: hidden;
+`;
+
+const Image = styled.img`
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  transition: transform ${props => props.theme.transitions.slow};
+  
+  ${PropertyCardContainer}:hover & {
+    transform: scale(1.05);
+  }
 `;
 
 const Badge = styled.div<{ type: 'apartment' | 'house' | 'condo' }>`
@@ -104,16 +128,12 @@ const DetailLabel = styled.span`
   margin-top: ${props => props.theme.spacing.xs};
 `;
 
-const ImageContainer = styled.div`
-  position: relative;
-`;
-
 interface PropertyCardProps {
   property: Property;
   onClick?: (property: Property) => void;
 }
 
-export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
+export const PropertyCardRefactored: React.FC<PropertyCardProps> = ({ property, onClick }) => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',

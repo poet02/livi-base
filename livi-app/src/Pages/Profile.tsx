@@ -2,10 +2,23 @@ import { User, BarChart3, Calendar, FileText, Mail, Shield, HelpCircle, CreditCa
 import TilesPage, { type TileItem } from "../Components/TileLayout";
 import { Page } from "./styles";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import { createUser } from "../helpers/apis";
 
 export function Profile() {
   const navigate = useNavigate();
   // return <Page>Welcome to the Profile Page</Page>;
+  const makeTestApiCall = async () => {
+    try {
+      console.log('Making test API call to create user...');
+      const response = await createUser({
+        username: "testuser",
+        email: "sjwdnswjnd@kjnd.com"})
+      const data = await response.json();
+      console.log('API Response:', data);
+    } catch (error) {
+      console.error('API Error:', error);
+    }
+  }
   const tiles: TileItem[] = [
     {
       title: "Profile",
@@ -19,22 +32,10 @@ export function Profile() {
       onClick: () => navigate("/properties"),
       description: "Manage And Update your Properties",
     },
-    // {
-    //   title: "Calendar",
-    //   icon: <Calendar />,
-    //   onClick: () => console.log('Calendar clicked'),
-    //   description: "Schedule and manage events",
-    // },
-    // {
-    //   title: "Documents",
-    //   icon: <FileText />,
-    //   onClick: () => console.log('Documents clicked'),
-    //   description: "Access your files and documents",
-    // },
     {
       title: "Messages",
       icon: <Mail />,
-      onClick: () => console.log('Messages clicked'),
+      // onClick: () => makeTestApiCall(),
       description: "Check your inbox and sent items",
       size: 'medium',
     },
