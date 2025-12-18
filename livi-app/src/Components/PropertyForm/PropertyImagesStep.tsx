@@ -130,6 +130,64 @@ const RemoveButton = styled.button`
   }
 `;
 
+const OrderBadge = styled.div`
+  position: absolute;
+  bottom: ${props => props.theme.spacing.xs};
+  left: ${props => props.theme.spacing.xs};
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: ${props => props.theme.borderRadius.base};
+  padding: 4px 8px;
+  font-size: ${props => props.theme.typography.fontSize.sm};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  min-width: 24px;
+  text-align: center;
+  z-index: 10;
+`;
+
+const LocationInfo = styled.div`
+  margin-top: ${props => props.theme.spacing.xs};
+  padding: ${props => props.theme.spacing.xs} ${props => props.theme.spacing.sm};
+  background: ${props => props.theme.colors.grey[200]};
+  border-radius: ${props => props.theme.borderRadius.base};
+  font-size: ${props => props.theme.typography.fontSize.xs};
+  font-family: monospace;
+  color: ${props => props.theme.colors.text.primary};
+  text-align: center;
+  word-break: break-all;
+  width: 100%;
+  flex-shrink: 0;
+`;
+
+const DistanceInfo = styled.div<{ isWithinRange: boolean }>`
+  margin-top: ${props => props.theme.spacing.xs};
+  padding: ${props => props.theme.spacing.xs} ${props => props.theme.spacing.sm};
+  background: ${props => props.isWithinRange 
+    ? (props.theme.colors.success?.main || '#4caf50') + '15'
+    : (props.theme.colors.error?.main || '#f44336') + '15'
+  };
+  border: 1px solid ${props => props.isWithinRange 
+    ? props.theme.colors.success?.main || '#4caf50'
+    : props.theme.colors.error?.main || '#f44336'
+  };
+  border-radius: ${props => props.theme.borderRadius.base};
+  font-size: ${props => props.theme.typography.fontSize.xs};
+  color: ${props => props.isWithinRange 
+    ? props.theme.colors.success?.main || '#4caf50'
+    : props.theme.colors.error?.main || '#f44336'
+  };
+  text-align: center;
+  width: 100%;
+  flex-shrink: 0;
+  font-weight: ${props => props.theme.typography.fontWeight.medium};
+`;
+
+const SlotWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+`;
+
 const ModalOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -209,9 +267,31 @@ const ModalButton = styled.button<{ variant: 'primary' | 'secondary' | 'danger' 
 // Hardcoded number of image slots
 const MAX_IMAGES = 10;
 
+// Maximum allowed distance from property location (in meters)
+const MAX_DISTANCE_FROM_PROPERTY_METERS = 50;
+
+// Haversine formula to calculate distance in meters between two coordinates
+function calculateDistanceInMeters(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371000; // Earth's radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in meters
+}
+
 interface ImageSlotData {
   file: File | null;
   preview: string | null;
+  location?: { latitude: number; longitude: number };
 }
 
 interface PropertyImagesStepProps {
@@ -234,7 +314,7 @@ export function PropertyImagesStep({
   setImagePreviews
 }: PropertyImagesStepProps) {
   const [imageSlots, setImageSlots] = useState<ImageSlotData[]>(
-    Array(MAX_IMAGES).fill(null).map(() => ({ file: null, preview: null }))
+    Array(MAX_IMAGES).fill(null).map(() => ({ file: null, preview: null, location: undefined }))
   );
   const [showModal, setShowModal] = useState(false);
   const [modalSlotIndex, setModalSlotIndex] = useState<number | null>(null);
@@ -243,32 +323,47 @@ export function PropertyImagesStep({
 
   // Initialize slots from existing images and previews
   useEffect(() => {
-    const slots: ImageSlotData[] = Array(MAX_IMAGES).fill(null).map(() => ({ file: null, preview: null }));
-    
-    // Add existing images (edit mode)
-    if (isEditMode && existingImages.length > 0) {
-      existingImages.forEach((imageUrl, index) => {
-        if (index < MAX_IMAGES) {
-          slots[index] = { file: null, preview: imageUrl };
+    setImageSlots(prevSlots => {
+      const slots: ImageSlotData[] = Array(MAX_IMAGES).fill(null).map((_, index) => {
+        // Preserve existing slot data if it exists
+        const existingSlot = prevSlots[index];
+        return existingSlot || { file: null, preview: null, location: undefined };
+      });
+      
+      // Add existing images (edit mode)
+      if (isEditMode && existingImages.length > 0) {
+        existingImages.forEach((imageUrl, index) => {
+          if (index < MAX_IMAGES) {
+            const existingSlot = prevSlots[index];
+            slots[index] = { 
+              file: null, 
+              preview: imageUrl, 
+              location: existingSlot?.location 
+            };
+          }
+        });
+      }
+      
+      // Add new image previews
+      imagePreviews.forEach((preview, index) => {
+        const slotIndex = existingImages.length + index;
+        if (slotIndex < MAX_IMAGES) {
+          const file = watch('images')[index] || null;
+          const existingSlot = prevSlots[slotIndex];
+          slots[slotIndex] = { 
+            file, 
+            preview, 
+            location: existingSlot?.location 
+          };
         }
       });
-    }
-    
-    // Add new image previews
-    imagePreviews.forEach((preview, index) => {
-      const slotIndex = existingImages.length + index;
-      if (slotIndex < MAX_IMAGES) {
-        const file = watch('images')[index] || null;
-        slots[slotIndex] = { file, preview };
-      }
-    });
 
-    setImageSlots(slots);
+      return slots;
+    });
   }, [existingImages, imagePreviews, isEditMode, watch]);
 
 
   const handleSlotClick = (index: number) => {
-    console.log('Slot clicked:', index);
     const slot = imageSlots[index];
     if (slot.file || slot.preview) {
       // Slot has image - show modal
@@ -276,16 +371,37 @@ export function PropertyImagesStep({
       setShowModal(true);
     } else {
       // Empty slot - open camera
-      console.log('Opening camera for slot:', index);
       setCameraSlotIndex(index);
       setShowCamera(true);
     }
   };
 
-  const handleImageCapture = (file: File) => {
+  const handleImageCapture = (file: File, location?: { latitude: number; longitude: number }) => {
     if (cameraSlotIndex !== null) {
       const index = cameraSlotIndex;
       const preview = URL.createObjectURL(file);
+      
+      // Get property location from form
+      const propertyLat = watch('latitude');
+      const propertyLon = watch('longitude');
+      
+      // Validate distance if both locations are available
+      if (location && propertyLat && propertyLon) {
+        const distance = calculateDistanceInMeters(
+          propertyLat,
+          propertyLon,
+          location.latitude,
+          location.longitude
+        );
+        
+        console.log(`Distance from property: ${distance.toFixed(2)} meters`);
+        
+        if (distance > MAX_DISTANCE_FROM_PROPERTY_METERS) {
+          console.warn(`Image is ${distance.toFixed(2)}m away from property location (max: ${MAX_DISTANCE_FROM_PROPERTY_METERS}m)`);
+          // You can show a warning/error message here or prevent saving
+          // For now, we'll just log it
+        }
+      }
       
       // Clean up old blob URL if replacing
       const oldSlot = imageSlots[index];
@@ -294,7 +410,7 @@ export function PropertyImagesStep({
       }
       
       const newSlots = [...imageSlots];
-      newSlots[index] = { file, preview };
+      newSlots[index] = { file, preview, location };
       setImageSlots(newSlots);
 
       // Update form values
@@ -352,7 +468,7 @@ export function PropertyImagesStep({
     }
 
     const newSlots = [...imageSlots];
-    newSlots[modalSlotIndex] = { file: null, preview: null };
+    newSlots[modalSlotIndex] = { file: null, preview: null, location: undefined };
     setImageSlots(newSlots);
 
     // Update form values
@@ -394,7 +510,7 @@ export function PropertyImagesStep({
 
     // Ensure we have MAX_IMAGES slots
     while (newSlots.length < MAX_IMAGES) {
-      newSlots.push({ file: null, preview: null });
+      newSlots.push({ file: null, preview: null, location: undefined });
     }
 
     setImageSlots(newSlots);
@@ -431,54 +547,92 @@ export function PropertyImagesStep({
   const createSlotItem = (slot: ImageSlotData, index: number): DraggableItem => {
     const isEmpty = !slot.file && !slot.preview;
     
+    // Calculate order number (count filled slots before this one)
+    const orderNumber = isEmpty ? 0 : imageSlots.slice(0, index + 1).filter(s => s.file || s.preview).length;
+    
     const content = (
-      <ImageSlot isEmpty={isEmpty}>
-        {isEmpty ? (
-          <PlaceholderButton
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('Placeholder button clicked for slot:', index);
-              // Use setTimeout to ensure navigation happens after event propagation
-              setTimeout(() => {
-                handleSlotClick(index);
-              }, 0);
-            }}
-            onMouseDown={(e) => {
-              // Prevent drag from starting when clicking the button
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            onTouchStart={(e) => {
-              // Prevent drag on touch devices
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            style={{ 
-              position: 'relative',
-              zIndex: 100
-            }}
-          >
-            <Plus />
-            <PlaceholderText>Add Photo</PlaceholderText>
-          </PlaceholderButton>
-        ) : (
-          <ImageContent>
-            <ImagePreview src={slot.preview || undefined} alt={`Property ${index + 1}`} />
-            <RemoveButton
+      <SlotWrapper>
+        <ImageSlot isEmpty={isEmpty}>
+          {isEmpty ? (
+            <PlaceholderButton
               type="button"
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
-                setModalSlotIndex(index);
-                setShowModal(true);
+                handleSlotClick(index);
+              }}
+              onMouseDown={(e) => {
+                // Prevent drag from starting when clicking the button
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onTouchStart={(e) => {
+                // Prevent drag on touch devices
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              style={{ 
+                position: 'relative',
+                zIndex: 100
               }}
             >
-              <X />
-            </RemoveButton>
-          </ImageContent>
+              <Plus />
+              <PlaceholderText>Add Photo</PlaceholderText>
+            </PlaceholderButton>
+          ) : (
+            <ImageContent>
+              <ImagePreview src={slot.preview || undefined} alt={`Property ${index + 1}`} />
+              <RemoveButton
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setModalSlotIndex(index);
+                  setShowModal(true);
+                }}
+              >
+                <X />
+              </RemoveButton>
+              <OrderBadge>
+                {orderNumber}
+              </OrderBadge>
+            </ImageContent>
+          )}
+        </ImageSlot>
+        {!isEmpty && slot.location && (() => {
+          const propertyLat = watch('latitude');
+          const propertyLon = watch('longitude');
+          let distance: number | null = null;
+          let isWithinRange = true;
+          
+          if (propertyLat && propertyLon) {
+            distance = calculateDistanceInMeters(
+              propertyLat,
+              propertyLon,
+              slot.location.latitude,
+              slot.location.longitude
+            );
+            isWithinRange = distance <= MAX_DISTANCE_FROM_PROPERTY_METERS;
+          }
+          
+          return (
+            <>
+              <LocationInfo>
+                📍 {slot.location.latitude.toFixed(6)}, {slot.location.longitude.toFixed(6)}
+              </LocationInfo>
+              {distance !== null && (
+                <DistanceInfo isWithinRange={isWithinRange}>
+                  {isWithinRange ? '✓' : '⚠'} {distance.toFixed(1)}m from property
+                </DistanceInfo>
+              )}
+            </>
+          );
+        })()}
+        {!isEmpty && !slot.location && (
+          <LocationInfo>
+            No location data
+          </LocationInfo>
         )}
-      </ImageSlot>
+      </SlotWrapper>
     );
 
     return createDraggableItem(`slot-${index}`, content);

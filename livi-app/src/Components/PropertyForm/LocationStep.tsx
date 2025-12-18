@@ -21,6 +21,18 @@ const FormRow = styled.div`
   }
 `;
 
+const AddressRow = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: ${props => props.theme.spacing.lg};
+  margin-bottom: ${props => props.theme.spacing.lg};
+
+  @media (max-width: ${props => props.theme.breakpoints.md}) {
+    grid-template-columns: 1fr;
+    gap: ${props => props.theme.spacing.base};
+  }
+`;
+
 const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -85,6 +97,12 @@ function extractLocationData(feature: MapboxFeature) {
   );
   const country = countryContext?.text || '';
   
+  // Extract zipcode/postcode
+  const postcodeContext = context.find(ctx => 
+    ctx.id?.startsWith('postcode')
+  );
+  const zipCode = postcodeContext?.text || '';
+  
   // Extract coordinates
   const [longitude, latitude] = feature.center;
   
@@ -93,6 +111,7 @@ function extractLocationData(feature: MapboxFeature) {
     city,
     state,
     country,
+    zipCode,
     latitude,
     longitude,
   };
@@ -111,6 +130,7 @@ const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
 
 export function LocationStep({ register, errors, setValue, watch }: LocationStepProps) {
   const address = watch('address');
+  const zipCode = watch('zipCode');
   const latitude = watch('latitude');
   const longitude = watch('longitude');
 
@@ -123,6 +143,7 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
       setValue('city', locationData.city, { shouldValidate: true });
       setValue('state', locationData.state, { shouldValidate: true });
       setValue('country', locationData.country, { shouldValidate: true });
+      setValue('zipCode', locationData.zipCode, { shouldValidate: true });
       setValue('latitude', locationData.latitude, { shouldValidate: true });
       setValue('longitude', locationData.longitude, { shouldValidate: true });
     } else {
@@ -131,6 +152,7 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
       setValue('city', '', { shouldValidate: true });
       setValue('state', '', { shouldValidate: true });
       setValue('country', '', { shouldValidate: true });
+      setValue('zipCode', '', { shouldValidate: true });
       setValue('latitude', undefined, { shouldValidate: true });
       setValue('longitude', undefined, { shouldValidate: true });
     }
@@ -211,6 +233,61 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
         />
         {errors.country && <ErrorMessage>{errors.country.message}</ErrorMessage>}
       </FormGroup>
+
+      <AddressRow>
+        <FormGroup>
+          <Label>Street Address</Label>
+          <Input
+            {...register('address')}
+            placeholder="Street address (auto-filled)"
+            hasError={!!errors.address}
+            readOnly
+            title="Street address is automatically filled from the location search"
+          />
+          {errors.address && <ErrorMessage>{errors.address.message}</ErrorMessage>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label>Postal Code</Label>
+          <Input
+            {...register('zipCode')}
+            placeholder="Postal code (auto-filled)"
+            hasError={!!errors.zipCode}
+            readOnly
+            title="Postal code is automatically filled from the location search"
+            value={zipCode || ''}
+          />
+          {errors.zipCode && <ErrorMessage>{errors.zipCode.message}</ErrorMessage>}
+        </FormGroup>
+      </AddressRow>
+
+      <FormRow>
+        <FormGroup>
+          <Label>Latitude</Label>
+          <Input
+            {...register('latitude')}
+            placeholder="Latitude (auto-filled)"
+            hasError={!!errors.latitude}
+            readOnly
+            title="Latitude is automatically filled from the location search"
+            value={latitude !== undefined ? latitude.toFixed(6) : ''}
+          />
+          {errors.latitude && <ErrorMessage>{errors.latitude.message}</ErrorMessage>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label>Longitude</Label>
+          <Input
+            {...register('longitude')}
+            placeholder="Longitude (auto-filled)"
+            hasError={!!errors.longitude}
+            readOnly
+            title="Longitude is automatically filled from the location search"
+            value={longitude !== undefined ? longitude.toFixed(6) : ''}
+          />
+          {errors.longitude && <ErrorMessage>{errors.longitude.message}</ErrorMessage>}
+        </FormGroup>
+      </FormRow>
 
       <MapboxLocationMap
         latitude={latitude}

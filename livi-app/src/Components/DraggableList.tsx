@@ -52,6 +52,7 @@ const SortableItem = styled.div.withConfig({
     ? '0 8px 25px rgba(0, 0, 0, 0.15)' 
     : '0 2px 8px rgba(0, 0, 0, 0.1)'
   };
+  overflow: visible;
 
   &:hover {
     border-color: #1976d2;
@@ -81,20 +82,16 @@ const DragHandle = styled.div.withConfig({
   }
   padding: 0.25rem;
   border-radius: 4px;
-  cursor: grab;
   color: #666;
   transition: all 0.2s ease;
   opacity: 0.6;
   z-index: 10;
+  pointer-events: none;
 
   &:hover {
     color: #1976d2;
     background: rgba(0, 0, 0, 0.05);
     opacity: 1;
-  }
-
-  &:active {
-    cursor: grabbing;
   }
 
   svg {
@@ -104,8 +101,10 @@ const DragHandle = styled.div.withConfig({
 `;
 
 const ItemContent = styled.div`
-  padding: 1rem;
-  height: 100%;
+  padding: 0.25rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 `;
 
 const EmptyState = styled.div`
@@ -201,10 +200,10 @@ const SortableItemComponent: React.FC<SortableItemProps> = ({
       style={style}
       isDragging={isDragging}
       {...attributes}
+      {...listeners}
     >
       <DragHandle 
-        {...listeners}
-        $handlePosition={handlePosition} // Changed to $handlePosition
+        $handlePosition={handlePosition}
       >
         {getDragHandleIcon()}
       </DragHandle>

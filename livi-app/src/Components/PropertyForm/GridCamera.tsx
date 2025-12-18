@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { Camera, X, Check, VideoOff, RotateCcw } from 'lucide-react';
 import { useCamera } from '../../context/CameraContext';
+import piexif from 'piexifjs';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -262,9 +263,41 @@ const LoadingMessage = styled.div`
   text-align: center;
 `;
 
+const LocationInfo = styled.div`
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: monospace;
+  z-index: 20;
+`;
+
 interface GridCameraProps {
-  onCapture: (file: File) => void;
+  onCapture: (file: File, location?: { latitude: number; longitude: number }) => void;
   onClose: () => void;
+}
+
+// Helper functions for binary conversion
+function arrayBufferToBinaryString(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return binary;
+}
+
+function binaryStringToArrayBuffer(binary: string): ArrayBuffer {
+  const buffer = new ArrayBuffer(binary.length);
+  const view = new Uint8Array(buffer);
+  for (let i = 0; i < binary.length; i++) {
+    view[i] = binary.charCodeAt(i);
+  }
+  return buffer;
 }
 
 export function GridCamera({ onCapture, onClose }: GridCameraProps) {
@@ -278,6 +311,8 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [currentPreview, setCurrentPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const isDev = import.meta.env.DEV;
 
   const { setActiveStream, stopCamera: globalStopCamera } = useCamera();
 
@@ -409,7 +444,34 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
     setTimeout(startCamera, 100);
   };
 
-  const capturePhoto = () => {
+  const getCurrentLocation = (): Promise<{ latitude: number; longitude: number }> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.warn('Error getting location:', error);
+          reject(error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0,
+        }
+      );
+    });
+  };
+
+  const capturePhoto = async () => {
     if (videoRef.current && canvasRef.current && isCameraActive) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -425,6 +487,14 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
       try {
         context.drawImage(video, 0, 0, width, height);
 
+        // Try to get location when photo is captured
+        try {
+          const coords = await getCurrentLocation();
+          setLocation(coords);
+        } catch (error) {
+          console.warn('Could not get location on capture:', error);
+        }
+
         canvas.toBlob((blob) => {
           if (blob) {
             capturedBlobRef.current = blob;
@@ -438,23 +508,76 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
     }
   };
 
-  const acceptPhoto = () => {
+  const acceptPhoto = async () => {
     if (!currentPreview || !capturedBlobRef.current) return;
 
-    // Convert blob to File
+    // Use location if we have it, otherwise try to get it
+    let coords = location;
+    if (!coords) {
+      try {
+        coords = await getCurrentLocation();
+        setLocation(coords);
+      } catch (error) {
+        console.warn('Could not get location:', error);
+      }
+    }
+
+    if (coords) {
+      try {
+        // Convert blob to array buffer
+        const arrayBuffer = await capturedBlobRef.current.arrayBuffer();
+        const binary = arrayBufferToBinaryString(arrayBuffer);
+
+        // Create EXIF data with GPS coordinates
+        const exifObj = {
+          '0th': {},
+          'Exif': {},
+          'GPS': {
+            [piexif.GPSIFD.GPSLatitude]: piexif.GPSHelper.degToDmsRational(coords.latitude),
+            [piexif.GPSIFD.GPSLatitudeRef]: coords.latitude >= 0 ? 'N' : 'S',
+            [piexif.GPSIFD.GPSLongitude]: piexif.GPSHelper.degToDmsRational(coords.longitude),
+            [piexif.GPSIFD.GPSLongitudeRef]: coords.longitude >= 0 ? 'E' : 'W',
+          },
+          'Interop': {},
+          '1st': {},
+          'thumbnail': undefined,
+        };
+
+        // Insert EXIF data into image
+        const exifStr = piexif.dump(exifObj);
+        const newBinary = piexif.insert(exifStr, binary);
+        const newBlob = new Blob([binaryStringToArrayBuffer(newBinary)], { type: 'image/jpeg' });
+
+        // Convert to File
+        const file = new File([newBlob], `property-photo-${Date.now()}.jpg`, {
+          type: 'image/jpeg',
+        });
+
+        cleanupCamera();
+        
+        if (currentPreview) {
+          URL.revokeObjectURL(currentPreview);
+        }
+
+        onCapture(file, coords);
+        return;
+      } catch (error) {
+        console.warn('Could not embed location data:', error);
+      }
+    }
+
+    // Fallback: create file without location data
     const file = new File([capturedBlobRef.current], `property-photo-${Date.now()}.jpg`, {
-      type: 'image/jpeg'
+      type: 'image/jpeg',
     });
 
     cleanupCamera();
     
-    // Clean up preview URL
     if (currentPreview) {
       URL.revokeObjectURL(currentPreview);
     }
 
-    // Call the onCapture callback
-    onCapture(file);
+    onCapture(file, coords || undefined);
   };
 
   const rejectPhoto = () => {
@@ -462,6 +585,7 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
       URL.revokeObjectURL(currentPreview);
     }
     setCurrentPreview(null);
+    setLocation(null);
   };
 
   const handleClose = () => {
@@ -484,6 +608,11 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
         <PreviewContainer>
           <PreviewContent>
             <PreviewImage src={currentPreview} alt="Captured preview" />
+            {location && (
+              <LocationInfo>
+                📍 Lat: {location.latitude.toFixed(6)}, Long: {location.longitude.toFixed(6)}
+              </LocationInfo>
+            )}
           </PreviewContent>
           <PreviewControls>
             <PreviewButton variant="reject" onClick={rejectPhoto}>

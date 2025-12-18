@@ -8,6 +8,7 @@ export interface PropertyFormData {
   city: string;
   state: string;
   country: string;
+  zipCode?: string;
   latitude?: number;
   longitude?: number;
   bedrooms: number;

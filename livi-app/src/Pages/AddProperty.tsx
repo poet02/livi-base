@@ -137,6 +137,7 @@ const defaultValues: PropertyFormData = {
   city: '',
   state: '',
   country: '',
+  zipCode: undefined,
   latitude: undefined,
   longitude: undefined,
   bedrooms: 0,
@@ -204,6 +205,7 @@ export function AddProperty() {
           city: propertyToEdit.city,
           state: propertyToEdit.state,
           country: 'South Africa', // Default for existing data
+          zipCode: undefined,
           latitude: undefined,
           longitude: undefined,
           bedrooms: propertyToEdit.bedrooms,
