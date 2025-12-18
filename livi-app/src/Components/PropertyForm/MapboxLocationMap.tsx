@@ -17,6 +17,7 @@ interface MapboxLocationMapProps {
   longitude?: number;
   accessToken: string;
   address?: string;
+  onMarkerDrag?: (lng: number, lat: number) => void;
 }
 
 export function MapboxLocationMap({
@@ -24,6 +25,7 @@ export function MapboxLocationMap({
   longitude,
   accessToken,
   address,
+  onMarkerDrag,
 }: MapboxLocationMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -61,9 +63,12 @@ export function MapboxLocationMap({
       el.style.height = '32px';
       el.style.backgroundImage = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' viewBox=\'0 0 24 24\' fill=\'%23ef4444\'%3E%3Cpath d=\'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z\'/%3E%3C/svg%3E")';
       el.style.backgroundSize = 'contain';
-      el.style.cursor = 'pointer';
+      el.style.cursor = 'grab';
 
-      markerRef.current = new mapboxgl.Marker(el)
+      markerRef.current = new mapboxgl.Marker({ 
+        element: el,
+        draggable: true 
+      })
         .setLngLat([longitude, latitude])
         .setPopup(
           address
@@ -72,12 +77,37 @@ export function MapboxLocationMap({
         )
         .addTo(mapRef.current);
 
+      // Add drag event listeners
+      if (onMarkerDrag) {
+        markerRef.current.on('dragstart', () => {
+          el.style.cursor = 'grabbing';
+        });
+        
+        markerRef.current.on('dragend', () => {
+          el.style.cursor = 'grab';
+          const lngLat = markerRef.current!.getLngLat();
+          onMarkerDrag(lngLat.lng, lngLat.lat);
+        });
+      }
+
       // Center map on marker
       mapRef.current.flyTo({
         center: [longitude, latitude],
         zoom: 15,
         duration: 1000,
       });
+    }
+
+    // Update popup when address changes (without recreating marker)
+    if (markerRef.current && address && longitude && latitude) {
+      const popup = markerRef.current.getPopup();
+      if (popup) {
+        popup.setText(address);
+      } else {
+        markerRef.current.setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setText(address)
+        );
+      }
     }
 
     // Cleanup

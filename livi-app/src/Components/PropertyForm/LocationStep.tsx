@@ -117,6 +117,31 @@ function extractLocationData(feature: MapboxFeature) {
   };
 }
 
+// Reverse geocoding function to get address from coordinates
+async function reverseGeocode(
+  lng: number,
+  lat: number,
+  accessToken: string
+): Promise<MapboxFeature | null> {
+  try {
+    const response = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?` +
+      `access_token=${accessToken}&` +
+      `limit=1`
+    );
+
+    if (!response.ok) {
+      throw new Error('Reverse geocoding request failed');
+    }
+
+    const data = await response.json();
+    return data.features && data.features.length > 0 ? data.features[0] : null;
+  } catch (error) {
+    console.error('Error reverse geocoding:', error);
+    return null;
+  }
+}
+
 interface LocationStepProps {
   register: UseFormRegister<PropertyFormData>;
   errors: FieldErrors<PropertyFormData>;
@@ -155,6 +180,23 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
       setValue('zipCode', '', { shouldValidate: true });
       setValue('latitude', undefined, { shouldValidate: true });
       setValue('longitude', undefined, { shouldValidate: true });
+    }
+  };
+
+  const handleMarkerDrag = async (lng: number, lat: number) => {
+    // Update coordinates immediately
+    setValue('latitude', lat, { shouldValidate: true });
+    setValue('longitude', lng, { shouldValidate: true });
+
+    // Reverse geocode to get address details
+    const feature = await reverseGeocode(lng, lat, MAPBOX_ACCESS_TOKEN);
+    if (feature) {
+      const locationData = extractLocationData(feature);
+      setValue('address', locationData.address, { shouldValidate: true });
+      setValue('city', locationData.city, { shouldValidate: true });
+      setValue('state', locationData.state, { shouldValidate: true });
+      setValue('country', locationData.country, { shouldValidate: true });
+      setValue('zipCode', locationData.zipCode, { shouldValidate: true });
     }
   };
 
@@ -270,7 +312,7 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
             hasError={!!errors.latitude}
             readOnly
             title="Latitude is automatically filled from the location search"
-            value={latitude !== undefined ? latitude.toFixed(6) : ''}
+            value={latitude !== undefined && latitude !== null && typeof latitude === 'number' ? latitude.toFixed(6) : ''}
           />
           {errors.latitude && <ErrorMessage>{errors.latitude.message}</ErrorMessage>}
         </FormGroup>
@@ -283,7 +325,7 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
             hasError={!!errors.longitude}
             readOnly
             title="Longitude is automatically filled from the location search"
-            value={longitude !== undefined ? longitude.toFixed(6) : ''}
+            value={longitude !== undefined && longitude !== null && typeof longitude === 'number' ? longitude.toFixed(6) : ''}
           />
           {errors.longitude && <ErrorMessage>{errors.longitude.message}</ErrorMessage>}
         </FormGroup>
@@ -294,6 +336,7 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
         longitude={longitude}
         accessToken={MAPBOX_ACCESS_TOKEN}
         address={address}
+        onMarkerDrag={handleMarkerDrag}
       />
     </Section>
   );
