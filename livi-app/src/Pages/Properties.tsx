@@ -23,18 +23,6 @@ const PageContainer = styled.div`
   overflow-y: auto;
 `;
 
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: ${props => props.theme.spacing.xl};
-`;
-
-const Title = styled.h1`
-  margin: 0;
-  color: ${props => props.theme.colors.text.primary};
-`;
-
 const SearchSection = styled.div<{ visible: boolean }>`
   position: fixed;
   top: 0;
