@@ -302,6 +302,8 @@ interface PropertyImagesStepProps {
   setExistingImages: (images: string[]) => void;
   imagePreviews: string[];
   setImagePreviews: (previews: string[]) => void;
+  imageLocations: Map<string, { latitude: number; longitude: number }>;
+  setImageLocations: (locations: Map<string, { latitude: number; longitude: number }>) => void;
 }
 
 export function PropertyImagesStep({
@@ -311,7 +313,9 @@ export function PropertyImagesStep({
   existingImages,
   setExistingImages,
   imagePreviews,
-  setImagePreviews
+  setImagePreviews,
+  imageLocations,
+  setImageLocations
 }: PropertyImagesStepProps) {
   const [imageSlots, setImageSlots] = useState<ImageSlotData[]>(
     Array(MAX_IMAGES).fill(null).map(() => ({ file: null, preview: null, location: undefined }))
@@ -321,46 +325,55 @@ export function PropertyImagesStep({
   const [showCamera, setShowCamera] = useState(false);
   const [cameraSlotIndex, setCameraSlotIndex] = useState<number | null>(null);
 
-  // Initialize slots from existing images and previews
+  // Initialize slots from existing images and previews - rebuild sequentially with no gaps
   useEffect(() => {
     setImageSlots(prevSlots => {
-      const slots: ImageSlotData[] = Array(MAX_IMAGES).fill(null).map((_, index) => {
-        // Preserve existing slot data if it exists
-        const existingSlot = prevSlots[index];
-        return existingSlot || { file: null, preview: null, location: undefined };
-      });
+      // Start with empty slots
+      const slots: ImageSlotData[] = Array(MAX_IMAGES).fill(null).map(() => ({ 
+        file: null, 
+        preview: null, 
+        location: undefined 
+      }));
       
-      // Add existing images (edit mode)
+      let slotIndex = 0;
+      
+      // Add existing images (edit mode) - place sequentially
       if (isEditMode && existingImages.length > 0) {
-        existingImages.forEach((imageUrl, index) => {
-          if (index < MAX_IMAGES) {
-            const existingSlot = prevSlots[index];
-            slots[index] = { 
+        existingImages.forEach((imageUrl) => {
+          if (slotIndex < MAX_IMAGES) {
+            // Find existing slot with this preview to preserve location
+            const existingSlot = prevSlots.find(s => s.preview === imageUrl);
+            const restoredLocation = imageLocations.get(imageUrl);
+            slots[slotIndex] = { 
               file: null, 
               preview: imageUrl, 
-              location: existingSlot?.location 
+              location: existingSlot?.location || restoredLocation
             };
+            slotIndex++;
           }
         });
       }
       
-      // Add new image previews
-      imagePreviews.forEach((preview, index) => {
-        const slotIndex = existingImages.length + index;
+      // Add new image previews - place sequentially after existing images
+      const images = watch('images');
+      imagePreviews.forEach((preview, previewIndex) => {
         if (slotIndex < MAX_IMAGES) {
-          const file = watch('images')[index] || null;
-          const existingSlot = prevSlots[slotIndex];
+          const file = images[previewIndex] || null;
+          // Find existing slot with this preview to preserve location
+          const existingSlot = prevSlots.find(s => s.preview === preview);
+          const restoredLocation = imageLocations.get(preview);
           slots[slotIndex] = { 
             file, 
             preview, 
-            location: existingSlot?.location 
+            location: existingSlot?.location || restoredLocation
           };
+          slotIndex++;
         }
       });
 
       return slots;
     });
-  }, [existingImages, imagePreviews, isEditMode, watch]);
+  }, [existingImages, imagePreviews, isEditMode, watch, imageLocations]);
 
 
   const handleSlotClick = (index: number) => {
@@ -406,7 +419,18 @@ export function PropertyImagesStep({
       // Clean up old blob URL if replacing
       const oldSlot = imageSlots[index];
       if (oldSlot.preview && oldSlot.preview.startsWith('blob:')) {
+        // Remove old location data from parent state
+        const newLocations = new Map(imageLocations);
+        newLocations.delete(oldSlot.preview);
+        setImageLocations(newLocations);
         URL.revokeObjectURL(oldSlot.preview);
+      }
+      
+      // Store location in parent state using preview URL as key
+      if (location) {
+        const newLocations = new Map(imageLocations);
+        newLocations.set(preview, location);
+        setImageLocations(newLocations);
       }
       
       const newSlots = [...imageSlots];
@@ -464,21 +488,26 @@ export function PropertyImagesStep({
     
     // Revoke object URL if it's a new image
     if (slot.preview && slot.preview.startsWith('blob:')) {
+      // Remove location data from parent state
+      const newLocations = new Map(imageLocations);
+      newLocations.delete(slot.preview);
+      setImageLocations(newLocations);
       URL.revokeObjectURL(slot.preview);
+    } else if (slot.preview) {
+      // Also remove for non-blob URLs (existing images)
+      const newLocations = new Map(imageLocations);
+      newLocations.delete(slot.preview);
+      setImageLocations(newLocations);
     }
 
-    const newSlots = [...imageSlots];
-    newSlots[modalSlotIndex] = { file: null, preview: null, location: undefined };
-    setImageSlots(newSlots);
-
-    // Update form values
+    // Update form values first
     if (isEditMode && modalSlotIndex < existingImages.length) {
-      // Remove existing image
+      // Remove existing image and shift remaining
       const newExisting = existingImages.filter((_, i) => i !== modalSlotIndex);
       setExistingImages(newExisting);
       setValue('existingImages', newExisting, { shouldValidate: true });
     } else {
-      // Remove new image
+      // Remove new image and shift remaining
       const imageIndex = isEditMode ? modalSlotIndex - existingImages.length : modalSlotIndex;
       const currentImages = watch('images');
       const newImages = currentImages.filter((_, i) => i !== imageIndex);
@@ -487,6 +516,25 @@ export function PropertyImagesStep({
       const newPreviews = imagePreviews.filter((_, i) => i !== imageIndex);
       setImagePreviews(newPreviews);
     }
+
+    // Rebuild slots array - shift images forward to fill gaps
+    const newSlots: ImageSlotData[] = Array(MAX_IMAGES).fill(null).map(() => ({ 
+      file: null, 
+      preview: null, 
+      location: undefined 
+    }));
+
+    // Rebuild slots by collecting all filled slots (except the deleted one) and placing them sequentially
+    let targetIndex = 0;
+    imageSlots.forEach((slot, index) => {
+      if (index !== modalSlotIndex && (slot.file || slot.preview)) {
+        // Keep this slot, move it to targetIndex
+        newSlots[targetIndex] = { ...slot };
+        targetIndex++;
+      }
+    });
+
+    setImageSlots(newSlots);
 
     setShowModal(false);
     setModalSlotIndex(null);

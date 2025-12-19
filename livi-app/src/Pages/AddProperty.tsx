@@ -41,9 +41,9 @@ const mockProperties = [
 
 const STEPS = [
   { number: 1, label: 'Location' },
-  { number: 2, label: 'Basic Information' },
-  { number: 3, label: 'Property Details' },
-  { number: 4, label: 'Property Images' },
+  { number: 2, label: 'Property Images' },
+  { number: 3, label: 'Basic Information' },
+  { number: 4, label: 'Property Details' },
   { number: 5, label: 'Review' },
 ];
 
@@ -134,6 +134,9 @@ const defaultValues: PropertyFormData = {
   monthlyPrice: 0,
   currency: 'ZAR',
   address: '',
+  streetNumber: undefined,
+  blockNumber: undefined,
+  unitNumber: undefined,
   city: '',
   state: '',
   country: '',
@@ -156,9 +159,9 @@ const defaultValues: PropertyFormData = {
 // Field groups for step validation
 const STEP_FIELDS: Record<number, (keyof PropertyFormData)[]> = {
   1: ['address', 'city', 'state', 'country'], // Location
-  2: ['title', 'type', 'monthlyPrice', 'currency'], // Basic Information
-  3: ['bedrooms', 'bathrooms', 'sqmt'], // Property Details
-  4: [], // Property Images (optional)
+  2: [], // Property Images (optional)
+  3: ['type', 'monthlyPrice', 'currency'], // Basic Information
+  4: ['bedrooms', 'bathrooms', 'sqmt'], // Property Details
   5: [], // Review (no validation needed)
 };
 
@@ -171,6 +174,7 @@ export function AddProperty() {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [imageLocations, setImageLocations] = useState<Map<string, { latitude: number; longitude: number }>>(new Map());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -202,6 +206,7 @@ export function AddProperty() {
           monthlyPrice: propertyToEdit.price || 0,
           currency: 'ZAR',
           address: propertyToEdit.address,
+          streetNumber: undefined,
           city: propertyToEdit.city,
           state: propertyToEdit.state,
           country: 'South Africa', // Default for existing data
@@ -223,6 +228,7 @@ export function AddProperty() {
 
         setExistingImages(propertyToEdit.images);
         setImagePreviews([]);
+        setImageLocations(new Map());
       }
     }
   }, [id, isEditMode, reset]);
@@ -298,6 +304,7 @@ export function AddProperty() {
         reset(defaultValues);
         setImagePreviews([]);
         setExistingImages([]);
+        setImageLocations(new Map());
         setShowSuccess(false);
         setCurrentStep(1);
         setCompletedSteps([]);
@@ -325,25 +332,6 @@ export function AddProperty() {
         );
       case 2:
         return (
-          <BasicInformationStep
-            register={register}
-            control={control}
-            errors={errors}
-            watch={watch}
-            setValue={setValue}
-          />
-        );
-      case 3:
-        return (
-          <PropertyDetailsStep
-            register={register}
-            errors={errors}
-            watch={watch}
-            setValue={setValue}
-          />
-        );
-      case 4:
-        return (
           <PropertyImagesStep
             watch={watch}
             setValue={setValue}
@@ -352,6 +340,27 @@ export function AddProperty() {
             setExistingImages={setExistingImages}
             imagePreviews={imagePreviews}
             setImagePreviews={setImagePreviews}
+            imageLocations={imageLocations}
+            setImageLocations={setImageLocations}
+          />
+        );
+      case 3:
+        return (
+          <BasicInformationStep
+            register={register}
+            control={control}
+            errors={errors}
+            watch={watch}
+            setValue={setValue}
+          />
+        );
+      case 4:
+        return (
+          <PropertyDetailsStep
+            register={register}
+            errors={errors}
+            watch={watch}
+            setValue={setValue}
           />
         );
       case 5:

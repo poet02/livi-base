@@ -124,11 +124,10 @@ export function BasicInformationStep({ register, control, errors, watch, setValu
       <FormRow>
         <FormGroup>
           <Label>
-            Property Title <RequiredStar>*</RequiredStar>
+            Property Title
           </Label>
           <Input
             {...register('title', {
-              required: 'Property title is required',
               minLength: { value: 5, message: 'Title must be at least 5 characters' }
             })}
             placeholder="e.g., Modern Downtown Apartment"

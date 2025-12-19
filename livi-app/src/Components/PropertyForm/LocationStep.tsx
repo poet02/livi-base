@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { FieldErrors, UseFormRegister, UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import styled from 'styled-components';
+import { MapPin } from 'lucide-react';
 import { Label as BaseLabel } from '../../styles/common';
 import { PropertyFormData, MapboxFeature } from './types';
 import { MapboxGeocoder } from './MapboxGeocoder';
@@ -12,18 +14,6 @@ const Section = styled.div`
 const FormRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: ${props => props.theme.spacing.lg};
-  margin-bottom: ${props => props.theme.spacing.lg};
-
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
-    grid-template-columns: 1fr;
-    gap: ${props => props.theme.spacing.base};
-  }
-`;
-
-const AddressRow = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr;
   gap: ${props => props.theme.spacing.lg};
   margin-bottom: ${props => props.theme.spacing.lg};
 
@@ -72,18 +62,98 @@ const ErrorMessage = styled.span`
   margin-top: ${props => props.theme.spacing.xs};
 `;
 
+const SearchContainer = styled.div`
+  display: flex;
+  gap: ${props => props.theme.spacing.sm};
+  align-items: flex-start;
+`;
+
+const CurrentLocationButton = styled.button`
+  padding: ${props => props.theme.spacing.md};
+  border: 1px solid ${props => props.theme.colors.border.light};
+  border-radius: ${props => props.theme.borderRadius.base};
+  background: ${props => props.theme.colors.background.default};
+  color: ${props => props.theme.colors.text.primary};
+  font-size: ${props => props.theme.typography.fontSize.sm};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: ${props => props.theme.spacing.xs};
+  transition: all ${props => props.theme.transitions.base};
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: ${props => props.theme.spacing.sm};
+
+  &:hover:not(:disabled) {
+    background: ${props => props.theme.colors.grey[100]};
+    border-color: ${props => props.theme.colors.primary.main};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
 // Helper function to extract location data from Mapbox feature
 function extractLocationData(feature: MapboxFeature) {
   const context = feature.context || [];
   
-  // Extract address (street address)
-  const address = feature.text || feature.place_name;
+  // Extract street number and street name
+  let streetNumber = '';
+  let streetName = '';
+  
+  if (feature.place_type?.includes('address')) {
+    // For address types, feature.text is the house/building number
+    streetNumber = feature.text || '';
+    // Street name is in the context with id starting with 'address'
+    const addressContext = context.find(ctx => 
+      ctx.id?.startsWith('address')
+    );
+    streetName = addressContext?.text || '';
+  } else {
+    // For non-address types (like POI or place), try to extract from address context
+    const addressContext = context.find(ctx => 
+      ctx.id?.startsWith('address')
+    );
+    if (addressContext) {
+      // If address context exists, it might contain the street name
+      streetName = addressContext.text || '';
+    }
+  }
+  
+  // Extract full street address (street name without number)
+  // Use street name if available, otherwise fall back to place_name or text
+  const address = streetName || (feature.place_name ? feature.place_name.split(',')[0] : feature.text || '');
   
   // Extract city
-  const cityContext = context.find(ctx => 
-    ctx.id?.startsWith('place') || ctx.id?.startsWith('locality')
-  );
-  const city = cityContext?.text || '';
+  // First check if the feature itself is a city/place type
+  let city = '';
+  if (feature.place_type?.includes('place') || feature.place_type?.includes('locality')) {
+    // If the feature is a city/place, use feature.text as the city
+    city = feature.text || '';
+  } else {
+    // Otherwise, look in the context array
+    const cityContext = context.find(ctx => 
+      ctx.id?.startsWith('place') || 
+      ctx.id?.startsWith('locality') ||
+      ctx.id?.startsWith('district')
+    );
+    city = cityContext?.text || '';
+    
+    // If still no city found, try to extract from place_name
+    // (e.g., "Durban, KwaZulu-Natal, South Africa" -> "Durban")
+    if (!city && feature.place_name) {
+      const parts = feature.place_name.split(',');
+      // The first part is often the city/place name
+      city = parts[0]?.trim() || '';
+    }
+  }
   
   // Extract province/state
   const regionContext = context.find(ctx => 
@@ -108,6 +178,7 @@ function extractLocationData(feature: MapboxFeature) {
   
   return {
     address,
+    streetNumber,
     city,
     state,
     country,
@@ -158,6 +229,8 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
   const zipCode = watch('zipCode');
   const latitude = watch('latitude');
   const longitude = watch('longitude');
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const handleLocationSelect = (feature: MapboxFeature | null) => {
     if (feature) {
@@ -200,6 +273,63 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
     }
   };
 
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setIsGettingLocation(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        // Update coordinates immediately
+        setValue('latitude', lat, { shouldValidate: true });
+        setValue('longitude', lng, { shouldValidate: true });
+
+        // Reverse geocode to get address details
+        const feature = await reverseGeocode(lng, lat, MAPBOX_ACCESS_TOKEN);
+        if (feature) {
+          const locationData = extractLocationData(feature);
+          setValue('address', locationData.address, { shouldValidate: true });
+          setValue('city', locationData.city, { shouldValidate: true });
+          setValue('state', locationData.state, { shouldValidate: true });
+          setValue('country', locationData.country, { shouldValidate: true });
+          setValue('zipCode', locationData.zipCode, { shouldValidate: true });
+        } else {
+          setLocationError('Could not find address for your location');
+        }
+        setIsGettingLocation(false);
+      },
+      (error) => {
+        setIsGettingLocation(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError('Location access denied. Please enable location permissions.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError('Location information unavailable.');
+            break;
+          case error.TIMEOUT:
+            setLocationError('Location request timed out.');
+            break;
+          default:
+            setLocationError('An unknown error occurred while getting your location.');
+            break;
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
   if (!MAPBOX_ACCESS_TOKEN) {
     return (
       <Section>
@@ -216,14 +346,28 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
         <Label>
           Search Location <RequiredStar>*</RequiredStar>
         </Label>
-        <MapboxGeocoder
-          value={address}
-          onChange={handleLocationSelect}
-          placeholder="Search for an address..."
-          hasError={!!errors.address}
-          errorMessage={errors.address?.message}
-          accessToken={MAPBOX_ACCESS_TOKEN}
-        />
+        <SearchContainer>
+          <div style={{ flex: 1 }}>
+            <MapboxGeocoder
+              value={address}
+              onChange={handleLocationSelect}
+              placeholder="Search for an address..."
+              hasError={!!errors.address}
+              errorMessage={errors.address?.message}
+              accessToken={MAPBOX_ACCESS_TOKEN}
+            />
+          </div>
+          <CurrentLocationButton
+            type="button"
+            onClick={handleUseCurrentLocation}
+            disabled={isGettingLocation}
+            title="Use your current location"
+          >
+            <MapPin />
+            {isGettingLocation ? 'Getting location...' : 'Use Current Location'}
+          </CurrentLocationButton>
+        </SearchContainer>
+        {locationError && <ErrorMessage>{locationError}</ErrorMessage>}
       </FormGroup>
 
       <FormRow>
@@ -276,7 +420,7 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
         {errors.country && <ErrorMessage>{errors.country.message}</ErrorMessage>}
       </FormGroup>
 
-      <AddressRow>
+      <FormRow>
         <FormGroup>
           <Label>Street Address</Label>
           <Input
@@ -301,7 +445,29 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
           />
           {errors.zipCode && <ErrorMessage>{errors.zipCode.message}</ErrorMessage>}
         </FormGroup>
-      </AddressRow>
+      </FormRow>
+
+      <FormRow>
+        <FormGroup>
+          <Label>Block Number</Label>
+          <Input
+            {...register('blockNumber')}
+            placeholder="Block number (optional)"
+            hasError={!!errors.blockNumber}
+          />
+          {errors.blockNumber && <ErrorMessage>{errors.blockNumber.message}</ErrorMessage>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label>Unit Number</Label>
+          <Input
+            {...register('unitNumber')}
+            placeholder="Unit number (optional)"
+            hasError={!!errors.unitNumber}
+          />
+          {errors.unitNumber && <ErrorMessage>{errors.unitNumber.message}</ErrorMessage>}
+        </FormGroup>
+      </FormRow>
 
       <FormRow>
         <FormGroup>

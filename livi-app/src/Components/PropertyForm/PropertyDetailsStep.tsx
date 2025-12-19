@@ -143,7 +143,7 @@ export function PropertyDetailsStep({ register, errors, watch, setValue }: Prope
         <FormGroup>
           <CheckboxLabel>
             <input type="checkbox" {...register('featured')} />
-            Featured Property
+            Sharing
           </CheckboxLabel>
         </FormGroup>
       </FormRow>

@@ -5,6 +5,9 @@ export interface PropertyFormData {
   monthlyPrice: number;
   currency: 'ZAR' | 'USD';
   address: string;
+  streetNumber?: string;
+  blockNumber?: string;
+  unitNumber?: string;
   city: string;
   state: string;
   country: string;

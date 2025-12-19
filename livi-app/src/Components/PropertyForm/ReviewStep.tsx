@@ -180,6 +180,24 @@ export function ReviewStep({ watch, imagePreviews, existingImages, isEditMode }:
             <ReviewLabel>Country:</ReviewLabel>
             <ReviewValue>{formData.country || <NoData>Not provided</NoData>}</ReviewValue>
           </ReviewRow>
+          {formData.zipCode && (
+            <ReviewRow>
+              <ReviewLabel>Postal Code:</ReviewLabel>
+              <ReviewValue>{formData.zipCode}</ReviewValue>
+            </ReviewRow>
+          )}
+          {formData.blockNumber && (
+            <ReviewRow>
+              <ReviewLabel>Block Number:</ReviewLabel>
+              <ReviewValue>{formData.blockNumber}</ReviewValue>
+            </ReviewRow>
+          )}
+          {formData.unitNumber && (
+            <ReviewRow>
+              <ReviewLabel>Unit Number:</ReviewLabel>
+              <ReviewValue>{formData.unitNumber}</ReviewValue>
+            </ReviewRow>
+          )}
           {formData.latitude && formData.longitude && (
             <ReviewRow>
               <ReviewLabel>Coordinates:</ReviewLabel>
@@ -214,7 +232,7 @@ export function ReviewStep({ watch, imagePreviews, existingImages, isEditMode }:
             <ReviewValue>{formData.petFriendly ? 'Yes' : 'No'}</ReviewValue>
           </ReviewRow>
           <ReviewRow>
-            <ReviewLabel>Featured:</ReviewLabel>
+            <ReviewLabel>Sharing:</ReviewLabel>
             <ReviewValue>{formData.featured ? 'Yes' : 'No'}</ReviewValue>
           </ReviewRow>
           {formData.amenities && formData.amenities.length > 0 && (
