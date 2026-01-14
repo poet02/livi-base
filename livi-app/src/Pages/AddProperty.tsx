@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import styled from 'styled-components';
 import { ArrowLeft } from 'lucide-react';
-import { Button as BaseButton, Card } from '../styles/common';
+import { Button as BaseButton } from '../styles/common';
 import { ProgressBar } from '../Components/PropertyForm/ProgressBar';
 import { BasicInformationStep } from '../Components/PropertyForm/BasicInformationStep';
 import { LocationStep } from '../Components/PropertyForm/LocationStep';
@@ -11,6 +11,7 @@ import { PropertyDetailsStep } from '../Components/PropertyForm/PropertyDetailsS
 import { PropertyImagesStep } from '../Components/PropertyForm/PropertyImagesStep';
 import { ReviewStep } from '../Components/PropertyForm/ReviewStep';
 import { PropertyFormData } from '../Components/PropertyForm/types';
+import { api, handleApiError, ApiError } from '../helpers/apiHelper';
 
 // Mock data for editing - in real app, this would come from API
 const mockProperties = [
@@ -100,9 +101,13 @@ const FormContainer = styled.div`
   padding: 0 ${props => props.theme.spacing.lg};
 `;
 
-const Form = styled(Card)`
+const Form = styled.form`
+  background: ${props => props.theme.colors.background.default};
+  border-radius: ${props => props.theme.borderRadius.lg};
+  box-shadow: ${props => props.theme.shadows.base};
   margin-top: ${props => props.theme.spacing.xl};
   padding: ${props => props.theme.spacing.xl};
+  transition: ${props => props.theme.transitions.base};
 `;
 
 const FormActions = styled.div`
@@ -177,6 +182,7 @@ export function AddProperty() {
   const [imageLocations, setImageLocations] = useState<Map<string, { latitude: number; longitude: number }>>(new Map());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [shouldSubmit, setShouldSubmit] = useState(false);
 
   const {
     control,
@@ -279,40 +285,84 @@ export function AddProperty() {
 
   // Handle back button
   const handleBack = () => {
+    console.log('handleBack');
     navigate(-1);
   };
 
   // Handle form submission
   const onSubmit = async (data: PropertyFormData) => {
+    // Only submit if the submit button was explicitly clicked
+    if (!shouldSubmit) {
+      return;
+    }
+    
+    console.log('Property data to submit:', data);
     setIsSubmitting(true);
+    setShouldSubmit(false); // Reset flag
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Prepare payload for backend (exclude images, amenities, and map featured to sharing)
+      const payload = {
+        title: data.title || undefined,
+        dailyPrice: data.dailyPrice,
+        weeklyPrice: data.weeklyPrice,
+        monthlyPrice: data.monthlyPrice,
+        currency: data.currency,
+        address: data.address,
+        streetNumber: data.streetNumber,
+        blockNumber: data.blockNumber,
+        unitNumber: data.unitNumber,
+        city: data.city,
+        state: data.state,
+        country: data.country,
+        zipCode: data.zipCode,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        bedrooms: data.bedrooms,
+        bathrooms: data.bathrooms,
+        sqmt: data.sqmt || undefined,
+        type: data.type,
+        parking: data.parking,
+        description: data.description || undefined,
+        petFriendly: data.petFriendly,
+        sharing: data.featured, // Map featured to sharing for backend
+      };
 
-      console.log('Property data to submit:', {
-        ...data,
-        isEditMode,
-        propertyId: id
-      });
+      console.log('Sending property payload:', payload);
+
+      if (isEditMode && id) {
+        // Update existing property
+        const response = await api.patch(`/v1/properties/${id}`, payload);
+        console.log('Property updated:', response.data);
+      } else {
+        // Create new property
+        const response = await api.post('/v1/properties', payload);
+        console.log('Property created:', response.data);
+      }
 
       // Show success message
       setShowSuccess(true);
+      // return;
 
       // Reset form after success
       setTimeout(() => {
-        reset(defaultValues);
-        setImagePreviews([]);
-        setExistingImages([]);
-        setImageLocations(new Map());
+        // reset(defaultValues);
+        // setImagePreviews([]);
+        // setExistingImages([]);
+        // setImageLocations(new Map());
         setShowSuccess(false);
-        setCurrentStep(1);
-        setCompletedSteps([]);
-        navigate('/properties');
+        // setCurrentStep(1);
+        // setCompletedSteps([]);
+        // navigate('/properties');
       }, 2000);
 
     } catch (error) {
       console.error('Error submitting property:', error);
+      const apiError = error as ApiError;
+      handleApiError(apiError, (err) => {
+        // Custom error handling - you can show a toast or error message here
+        alert(err.message || 'Failed to save property. Please try again.');
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -402,7 +452,15 @@ export function AddProperty() {
           </SuccessMessage>
         )}
 
-        <Form onSubmit={handleSubmit(onSubmit)}>
+        <Form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            // Only proceed if submit button was explicitly clicked
+            if (shouldSubmit) {
+              handleSubmit(onSubmit)(e);
+            }
+          }}
+        >
           {renderStep()}
 
           <FormActions>
@@ -438,9 +496,14 @@ export function AddProperty() {
               </Button>
             ) : (
             <Button
-              type="submit"
+              type="button"
               variant="primary"
               disabled={isSubmitting || !isValid}
+              onClick={(e) => {
+                e.preventDefault();
+                setShouldSubmit(true);
+                handleSubmit(onSubmit)(e);
+              }}
             >
               {isSubmitting
                 ? (isEditMode ? 'Updating Property...' : 'Adding Property...')

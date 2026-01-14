@@ -62,47 +62,52 @@ export const validatePassword = async (email: string, password: string) => {
   // return User.validPassword(password, user.password);
 };
 
-// export const findOneUser = async (options: any) => {
-//   if (!options.email && !options.id) {
-//     throw new Error("Please provide email or id ");
-//   }
-//   const where = {
-//     [Op.or]: [] as any,
-//   };
+export const findUserByMobile = async (mobile: string) => {
+  const user = await User.findOne({ where: { mobile } });
+  return user;
+};
 
-//   if (options.email) {
-//     where[Op.or].push({ email: options.email });
-//   }
-//   if (options.id) {
-//     where[Op.or].push({ id: options.id });
-//   }
+export const findOneUser = async (options: any) => {
+  if (!options.email && !options.id) {
+    throw new Error("Please provide email or id ");
+  }
+  const where = {
+    [Op.or]: [] as any,
+  };
 
-//   const user = await User.findOne({
-//     where,
-//     attributes: { exclude: ["password"] },
-//   });
-//   return user;
-// };
+  if (options.email) {
+    where[Op.or].push({ email: options.email });
+  }
+  if (options.id) {
+    where[Op.or].push({ id: options.id });
+  }
 
-// export const updateUserById = (user: any, userId: number) => {
-//   if (!user && !userId) {
-//     throw new Error("Please provide user data and/or user id to update");
-//   }
-//   if (userId && isNaN(userId)) {
-//     throw new Error("Invalid user id");
-//   }
-//   if (user.id || userId) {
-//     const id = user.id || userId;
+  const user = await User.findOne({
+    where,
+    attributes: { exclude: ["password"] },
+  });
+  return user;
+};
 
-//     if (user.password) {
-//       user.password = encryptSync(user.password);
-//     }
+export const updateUserById = (user: any, userId: number) => {
+  if (!user && !userId) {
+    throw new Error("Please provide user data and/or user id to update");
+  }
+  if (userId && isNaN(userId)) {
+    throw new Error("Invalid user id");
+  }
+  if (user.id || userId) {
+    const id = user.id || userId;
 
-//     return User.update(user, {
-//       where: { id: id },
-//     });
-//   }
-// };
+    if (user.password) {
+      user.password = encryptSync(user.password);
+    }
+
+    return User.update(user, {
+      where: { id: id },
+    });
+  }
+};
 
 export const deleteUserById = (userId: number) => {
   if (!userId) {

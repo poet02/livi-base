@@ -18,6 +18,10 @@ const envSchema = Joi.object({
   EMAIL_FROM: Joi.string().required(),
   OTP_EXPIRY_MIN: Joi.string().required(),
   OTP_SECRET: Joi.string().required(),
+  AWS_REGION: Joi.string().optional(),
+  AWS_ACCESS_KEY_ID: Joi.string().optional(),
+  AWS_SECRET_ACCESS_KEY: Joi.string().optional(),
+  AWS_S3_BUCKET_NAME: Joi.string().optional(),
   NODE_ENV: Joi.string().valid("development", "production", "test").default("development"),
   PORT: Joi.number().default(3000)
 }).unknown();
@@ -52,4 +56,11 @@ export const emailConfig = {
 export const otpConfig = {
   otpExpiry: process.env.OTP_EXPIRY_MIN,
   otpSecret: process.env.OTP_SECRET,
+};
+
+export const s3Config = {
+  region: process.env.AWS_REGION || 'us-east-1',
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  bucketName: process.env.AWS_S3_BUCKET_NAME,
 };

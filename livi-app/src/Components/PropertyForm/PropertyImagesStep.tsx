@@ -714,13 +714,13 @@ export function PropertyImagesStep({
               What would you like to do with this image?
             </p>
             <ModalActions>
-              <ModalButton variant="secondary" onClick={() => setShowModal(false)}>
+              <ModalButton type="button" variant="secondary" onClick={() => setShowModal(false)}>
                 Cancel
               </ModalButton>
-              <ModalButton variant="primary" onClick={handleReplace}>
+              <ModalButton type="button" variant="primary" onClick={handleReplace}>
                 Replace
               </ModalButton>
-              <ModalButton variant="danger" onClick={handleRemove}>
+              <ModalButton type="button" variant="danger" onClick={handleRemove}>
                 Remove
               </ModalButton>
             </ModalActions>
