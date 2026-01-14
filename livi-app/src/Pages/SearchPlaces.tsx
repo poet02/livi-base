@@ -1,14 +1,14 @@
 // pages/SearchPlaces.tsx
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Search, Filter, Navigation } from 'lucide-react';
+import { Search, Navigation } from 'lucide-react';
 import { usePlaceSearch } from '../hooks/usePlaceSearch';
-import { PlacesFilterPanel } from '../Components/PlacesFilterPanel';
 import { PlaceCard } from '../Components/PlaceCard';
 import { popularDestinations } from '../data/mockPlaces';
-import { Input as BaseInput, Button as BaseButton } from '../styles/common';
+import { Button as BaseButton } from '../styles/common';
 import { media } from '../styles/common';
+import { MapboxGeocoder } from '../Components/PropertyForm/MapboxGeocoder';
+import { MapboxFeature } from '../Components/PropertyForm/types';
 
 const Container = styled.div`
   height: 100vh;
@@ -58,20 +58,6 @@ const SearchInput = styled.div`
   position: relative;
 `;
 
-const Input = styled(BaseInput)`
-  padding: ${props => props.theme.spacing.base} ${props => props.theme.spacing.base} ${props => props.theme.spacing.base} 3rem;
-`;
-
-const SearchIcon = styled(Search)`
-  position: absolute;
-  left: ${props => props.theme.spacing.base};
-  top: 50%;
-  transform: translateY(-50%);
-  color: ${props => props.theme.colors.text.secondary};
-  width: 20px;
-  height: 20px;
-`;
-
 const LocationButton = styled(BaseButton).attrs({ variant: 'secondary' })`
   display: flex;
   align-items: center;
@@ -88,30 +74,6 @@ const SearchButton = styled(BaseButton).attrs({ variant: 'primary' })`
   display: flex;
   align-items: center;
   gap: ${props => props.theme.spacing.sm};
-
-  svg {
-    width: 20px;
-    height: 20px;
-  }
-`;
-
-const FilterButton = styled.button<{ active?: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: ${props => props.theme.spacing.sm};
-  background: ${props => props.active ? props.theme.colors.primary.main : props.theme.colors.background.default};
-  color: ${props => props.active ? props.theme.colors.primary.contrast : props.theme.colors.text.primary};
-  border: 1px solid ${props => props.theme.colors.border.light};
-  padding: ${props => props.theme.spacing.base} ${props => props.theme.spacing.lg};
-  border-radius: ${props => props.theme.borderRadius.md};
-  font-size: ${props => props.theme.typography.fontSize.base};
-  font-weight: ${props => props.theme.typography.fontWeight.semibold};
-  cursor: pointer;
-  transition: ${props => props.theme.transitions.base};
-
-  &:hover {
-    background: ${props => props.active ? props.theme.colors.primary.dark : props.theme.colors.grey[100]};
-  }
 
   svg {
     width: 20px;
@@ -240,13 +202,10 @@ const DestinationCount = styled.p`
 
 export function SearchPlaces() {
     const navigate = useNavigate();
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const {
         searchLocation,
         setSearchLocation,
-        filters,
-        setFilters,
         searchResults,
         isSearching,
         hasSearched,
@@ -256,9 +215,11 @@ export function SearchPlaces() {
     } = usePlaceSearch();
 
     const handleSearch = async () => {
-        if (!searchLocation.address && !searchLocation.useCurrentLocation) {
-            alert('Please enter a location or use your current location');
-            return;
+        if (!searchLocation.latitude || !searchLocation.longitude) {
+            if (!searchLocation.useCurrentLocation) {
+                alert('Please select a location or use your current location');
+                return;
+            }
         }
         await executeSearch();
     };
@@ -273,22 +234,15 @@ export function SearchPlaces() {
     };
 
     const handleDestinationClick = (destination: any) => {
+        // For popular destinations, we'll need coordinates
+        // For now, just set the address and let user search
         setSearchLocation({
             address: destination.name,
+            latitude: undefined,
+            longitude: undefined,
             useCurrentLocation: false
         });
     };
-
-    const hasActiveFilters =
-        filters.minPrice > 0 ||
-        filters.maxPrice < 1000 ||
-        filters.radius < 50 ||
-        filters.minBedrooms > 0 ||
-        filters.minBathrooms > 0 ||
-        filters.minSqft > 0 ||
-        filters.maxSqft < 5000 ||
-        filters.types.length > 0 ||
-        filters.minRating > 0;
 
     return (
         <Container>
@@ -299,21 +253,29 @@ export function SearchPlaces() {
                 <SearchSection>
                     <SearchContainer>
                         <SearchInput>
-                            <SearchIcon />
-                            <Input
-                                type="text"
-                                placeholder="Search by city, address, or landmark..."
+                            <MapboxGeocoder
                                 value={searchLocation.address}
-                                onChange={(e) => setSearchLocation(prev => ({
-                                    ...prev,
-                                    address: e.target.value,
-                                    useCurrentLocation: false
-                                }))}
-                                onKeyPress={(e) => {
-                                    if (e.key === 'Enter') {
-                                        handleSearch();
+                                onChange={(feature: MapboxFeature | null) => {
+                                    if (feature) {
+                                        const [lng, lat] = feature.geometry.coordinates;
+                                        setSearchLocation({
+                                            address: feature.place_name || feature.text || '',
+                                            latitude: lat,
+                                            longitude: lng,
+                                            useCurrentLocation: false
+                                        });
+                                    } else {
+                                        setSearchLocation(prev => ({
+                                            ...prev,
+                                            address: '',
+                                            latitude: undefined,
+                                            longitude: undefined,
+                                            useCurrentLocation: false
+                                        }));
                                     }
                                 }}
+                                placeholder="Search by city, address, or landmark..."
+                                accessToken={import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || ''}
                             />
                         </SearchInput>
 
@@ -332,14 +294,7 @@ export function SearchPlaces() {
                     </SearchContainer>
 
                     <ActionsRow>
-                        <FilterButton
-                            active={hasActiveFilters}
-                            onClick={() => setIsFilterOpen(true)}
-                        >
-                            <Filter />
-                            Filters
-                        </FilterButton>
-
+                        {/* Filters disabled for now */}
                         {hasSearched && (
                             <ClearButton onClick={clearSearch}>
                                 Clear Search
@@ -399,26 +354,7 @@ export function SearchPlaces() {
                 )}
             </Content>
 
-            <PlacesFilterPanel
-                isOpen={isFilterOpen}
-                onClose={() => setIsFilterOpen(false)}
-                filters={filters}
-                onFiltersChange={setFilters}
-                onApplyFilters={handleSearch}
-                onClearFilters={() => {
-                    setFilters({
-                        minPrice: 0,
-                        maxPrice: 1000,
-                        radius: 50,
-                        minBedrooms: 0,
-                        minBathrooms: 0,
-                        minSqft: 0,
-                        maxSqft: 5000,
-                        types: [],
-                        minRating: 0
-                    });
-                }}
-            />
+            {/* Filter panel disabled for now */}
         </Container>
     );
 }

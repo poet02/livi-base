@@ -1,20 +1,7 @@
 // hooks/usePlaceSearch.ts
 import { useState, useMemo } from 'react';
 import { PlaceToStay, SearchFilters, SearchLocation } from '../types/search';
-import { mockPlaces } from '../data/mockPlaces';
-
-// Haversine formula to calculate distance between two coordinates
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-  const R = 6371; // Earth's radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-};
+import { api, handleApiError, ApiError } from '../helpers/apiHelper';
 
 export function usePlaceSearch() {
   const [searchLocation, setSearchLocation] = useState<SearchLocation>({
@@ -23,8 +10,8 @@ export function usePlaceSearch() {
   });
   const [filters, setFilters] = useState<SearchFilters>({
     minPrice: 0,
-    maxPrice: 1000,
-    radius: 50,
+    maxPrice: 100000, // Increased default to accommodate higher prices (e.g., 10000 ZAR)
+    radius: 10, // Default to 0.2 km (200 meters)
     minBedrooms: 0,
     minBathrooms: 0,
     minSqft: 0,
@@ -34,58 +21,95 @@ export function usePlaceSearch() {
   });
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-
-  const searchResults = useMemo(() => {
-    if (!hasSearched) return [];
-
-    let results = [...mockPlaces];
-
-    // Filter by location if coordinates are available
-    if (searchLocation.latitude && searchLocation.longitude) {
-      results = results.map(place => ({
-        ...place,
-        distance: calculateDistance(
-          searchLocation.latitude!,
-          searchLocation.longitude!,
-          place.latitude,
-          place.longitude
-        )
-      })).filter(place => place.distance <= filters.radius);
-    }
-
-    // Apply filters
-    results = results.filter(place => {
-      return (
-        place.price >= filters.minPrice &&
-        place.price <= filters.maxPrice &&
-        place.bedrooms >= filters.minBedrooms &&
-        place.bathrooms >= filters.minBathrooms &&
-        place.sqft >= filters.minSqft &&
-        place.sqft <= filters.maxSqft &&
-        place.rating >= filters.minRating &&
-        (filters.types.length === 0 || filters.types.includes(place.type))
-      );
-    });
-
-    // Sort by distance if available, otherwise by rating
-    results.sort((a, b) => {
-      if (a.distance !== undefined && b.distance !== undefined) {
-        return a.distance - b.distance;
-      }
-      return b.rating - a.rating;
-    });
-
-    return results;
-  }, [searchLocation, filters, hasSearched]);
+  const [searchResults, setSearchResults] = useState<PlaceToStay[]>([]);
 
   const executeSearch = async () => {
+    if (!searchLocation.latitude || !searchLocation.longitude) {
+      alert('Please select a location or use your current location');
+      return;
+    }
+
     setIsSearching(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setHasSearched(true);
-    setIsSearching(false);
+    setHasSearched(false);
+
+    try {
+      // Convert radius from km to meters (filters.radius is in km, API expects meters)
+      const radiusInMeters = filters.radius * 1000;
+
+      const response = await api.get<{ data: any[]; error: boolean }>(
+        `/v1/properties/search?latitude=${searchLocation.latitude}&longitude=${searchLocation.longitude}&radius=${radiusInMeters}`
+      );
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to search properties');
+      }
+
+      // Extract properties from response
+      // API helper wraps response: { data: { data: [...], error }, success, status, message }
+      // So response.data is the backend response object
+      const backendResponse = response.data as any;
+      
+      // Handle different response structures
+      let propertiesData: any[] = [];
+      if (Array.isArray(backendResponse)) {
+        propertiesData = backendResponse;
+      } else if (backendResponse && Array.isArray(backendResponse.data)) {
+        propertiesData = backendResponse.data;
+      } else if (backendResponse && backendResponse.data && Array.isArray(backendResponse.data)) {
+        propertiesData = backendResponse.data;
+      }
+
+      // Transform Property response to PlaceToStay format
+      const transformedResults: PlaceToStay[] = propertiesData.map((property: any) => {
+        // Convert sqmt to sqft (1 sqm = 10.764 sqft)
+        const sqft = property.sqmt ? Math.round(property.sqmt * 10.764) : 0;
+
+        // Convert distance from meters to kilometers
+        const distanceInKm = property.distance ? property.distance / 1000 : undefined;
+
+        return {
+          id: String(property.id),
+          title: property.title || 'Untitled Property',
+          price: property.monthlyPrice,
+          address: property.address,
+          city: property.city || '',
+          latitude: property.latitude || 0,
+          longitude: property.longitude || 0,
+          bedrooms: property.bedrooms,
+          bathrooms: property.bathrooms,
+          sqft: sqft,
+          type: property.type === 'room' ? 'apartment' : property.type, // Map 'room' to 'apartment' for now
+          rating: 0, // Default to 0, will be populated when reviews are implemented
+          reviewCount: 0, // Default to 0, will be populated when reviews are implemented
+          image: property.firstImageUrl || '',
+          featured: property.sharing,
+          distance: distanceInKm,
+        };
+      });
+
+      // Filters disabled for now - use all transformed results
+      let filteredResults = transformedResults;
+
+      // Sort by distance (closest first)
+      filteredResults.sort((a, b) => {
+        if (a.distance !== undefined && b.distance !== undefined) {
+          return a.distance - b.distance;
+        }
+        if (a.distance !== undefined) return -1;
+        if (b.distance !== undefined) return 1;
+        return 0;
+      });
+
+      setSearchResults(filteredResults);
+      setHasSearched(true);
+    } catch (err) {
+      const apiError = err as ApiError;
+      handleApiError(apiError);
+      setSearchResults([]);
+      setHasSearched(true);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const useCurrentLocation = () => {
@@ -112,8 +136,11 @@ export function usePlaceSearch() {
   const clearSearch = () => {
     setSearchLocation({
       address: '',
+      latitude: undefined,
+      longitude: undefined,
       useCurrentLocation: false
     });
+    setSearchResults([]);
     setHasSearched(false);
   };
 

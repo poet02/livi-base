@@ -7,6 +7,7 @@ import {
   updatePropertyById,
   deletePropertyById,
   getUserProperties,
+  searchPropertiesByLocation,
 } from '../services/propertyService';
 
 export const createPropertyController = async (
@@ -134,6 +135,41 @@ export const getUserPropertiesController = async (
     }
 
     const properties = await getUserProperties(parseInt(userId, 10));
+
+    return res.status(200).json({
+      data: properties,
+      error: false,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const searchPropertiesController = async (
+  req: customRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const latitude = parseFloat(req.query.latitude as string);
+    const longitude = parseFloat(req.query.longitude as string);
+    const radius = req.query.radius
+      ? parseFloat(req.query.radius as string)
+      : 200;
+
+    if (isNaN(latitude) || isNaN(longitude)) {
+      throw new ApiError(400, 'Invalid latitude or longitude');
+    }
+
+    if (latitude < -90 || latitude > 90) {
+      throw new ApiError(400, 'Latitude must be between -90 and 90');
+    }
+
+    if (longitude < -180 || longitude > 180) {
+      throw new ApiError(400, 'Longitude must be between -180 and 180');
+    }
+
+    const properties = await searchPropertiesByLocation(latitude, longitude, radius);
 
     return res.status(200).json({
       data: properties,

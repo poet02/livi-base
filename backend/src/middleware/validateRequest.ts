@@ -1,9 +1,10 @@
 import Joi, { Schema } from "joi";
 
 import { Request, Response, NextFunction } from "express";
-const validateRequest = (schema: Schema) => {
+const validateRequest = (schema: Schema, source: 'body' | 'query' = 'body') => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const { error } = schema.validate(req.body);
+    const dataToValidate = source === 'query' ? req.query : req.body;
+    const { error } = schema.validate(dataToValidate);
     const valid = error == null;
 
     if (valid) {

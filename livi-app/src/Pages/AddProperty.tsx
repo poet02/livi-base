@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import styled from 'styled-components';
@@ -203,7 +203,7 @@ export function AddProperty() {
   const [imageLocations, setImageLocations] = useState<Map<string, { latitude: number; longitude: number }>>(new Map());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [shouldSubmit, setShouldSubmit] = useState(false);
+  const shouldSubmitRef = useRef(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -314,13 +314,13 @@ export function AddProperty() {
   // Handle form submission
   const onSubmit = async (data: PropertyFormData) => {
     // Only submit if the submit button was explicitly clicked
-    if (!shouldSubmit) {
+    if (!shouldSubmitRef.current) {
       return;
     }
     
     console.log('Property data to submit:', data);
     setIsSubmitting(true);
-    setShouldSubmit(false); // Reset flag
+    shouldSubmitRef.current = false; // Reset flag
 
     try {
       // Prepare payload for backend (exclude images, amenities, and map featured to sharing)
@@ -620,7 +620,7 @@ export function AddProperty() {
           onSubmit={(e) => {
             e.preventDefault();
             // Only proceed if submit button was explicitly clicked
-            if (shouldSubmit) {
+            if (shouldSubmitRef.current) {
               handleSubmit(onSubmit)(e);
             }
           }}
@@ -665,7 +665,7 @@ export function AddProperty() {
               disabled={isSubmitting || !isValid}
               onClick={(e) => {
                 e.preventDefault();
-                setShouldSubmit(true);
+                shouldSubmitRef.current = true;
                 handleSubmit(onSubmit)(e);
               }}
             >
