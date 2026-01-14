@@ -5,6 +5,7 @@ import {
   getPropertyController,
   updatePropertyController,
   deletePropertyController,
+  getUserPropertiesController,
 } from '../../controllers/property';
 import {
   getPresignedUrlsController,
@@ -27,6 +28,8 @@ propertyRouter.post(
   validateRequest(createPropertySchema),
   createPropertyController
 );
+
+propertyRouter.get('/', requireUser, getUserPropertiesController);
 
 propertyRouter.get('/:id', requireUser, getPropertyController);
 
@@ -119,6 +122,31 @@ export default propertyRouter;
  *     responses:
  *       "201":
  *         description: Property created successfully
+ */
+
+/**
+ * @swagger
+ * /v1/properties:
+ *   get:
+ *     summary: Get all user properties
+ *     description: Get all properties belonging to the authenticated user
+ *     tags: [Properties]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       "200":
+ *         description: Properties retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Property'
+ *                 error:
+ *                   type: boolean
  */
 
 /**

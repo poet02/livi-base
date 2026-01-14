@@ -1,5 +1,7 @@
 import Property from '../models/Property';
+import PropertyImage from '../models/PropertyImage';
 import { Op } from 'sequelize';
+import { generatePresignedGetUrl } from './s3Service';
 
 export interface PropertyCreatePayload {
   title?: string;
@@ -91,6 +93,59 @@ export const getUserProperties = async (
     where: { userId },
     order: [['createdAt', 'DESC']],
   });
-  return properties;
+
+  // If no properties, return empty array
+  if (properties.length === 0) {
+    return [];
+  }
+
+  // Get property IDs
+  const propertyIds = properties.map(p => p.id);
+
+  // Fetch first image for each property in one query
+  const firstImages = await PropertyImage.findAll({
+    where: {
+      propertyId: propertyIds,
+    },
+    order: [['order', 'ASC']],
+    attributes: ['propertyId', 's3Key'],
+    // Group by propertyId to get only the first image per property
+    // Using raw query approach since Sequelize doesn't support DISTINCT ON easily
+  });
+
+  // Create a map of propertyId -> first image s3Key
+  const imageMap = new Map<number, string>();
+  const seenProperties = new Set<number>();
+  
+  firstImages.forEach((image) => {
+    if (!seenProperties.has(image.propertyId)) {
+      imageMap.set(image.propertyId, image.s3Key);
+      seenProperties.add(image.propertyId);
+    }
+  });
+
+  // Add presigned URL for the first image if it exists
+  const propertiesWithImages = await Promise.all(
+    properties.map(async (property) => {
+      const propertyJson = property.toJSON() as any;
+      
+      const firstImageS3Key = imageMap.get(property.id);
+      if (firstImageS3Key) {
+        try {
+          const presignedUrl = await generatePresignedGetUrl(firstImageS3Key);
+          propertyJson.firstImageUrl = presignedUrl;
+        } catch (error) {
+          console.error(`Error generating presigned URL for property ${property.id}:`, error);
+          propertyJson.firstImageUrl = null;
+        }
+      } else {
+        propertyJson.firstImageUrl = null;
+      }
+      
+      return propertyJson;
+    })
+  );
+
+  return propertiesWithImages as any;
 };
 

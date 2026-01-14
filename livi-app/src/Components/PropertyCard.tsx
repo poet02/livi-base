@@ -21,7 +21,7 @@ const Image = styled.img`
   object-fit: cover;
 `;
 
-const Badge = styled.div<{ type: 'apartment' | 'house' | 'condo' }>`
+const Badge = styled.div<{ type: 'room' | 'apartment' | 'house' | 'condo' }>`
   position: absolute;
   top: ${props => props.theme.spacing.base};
   left: ${props => props.theme.spacing.base};
@@ -30,6 +30,7 @@ const Badge = styled.div<{ type: 'apartment' | 'house' | 'condo' }>`
       case 'apartment': return props.theme.colors.primary.main;
       case 'house': return props.theme.colors.success.main;
       case 'condo': return props.theme.colors.warning.main;
+      case 'room': return props.theme.colors.info?.main || props.theme.colors.primary.main;
       default: return props.theme.colors.grey[600];
     }
   }};
@@ -114,24 +115,28 @@ interface PropertyCardProps {
 }
 
 export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
+  const formatPrice = (price: number, currency: 'ZAR' | 'USD') => {
+    const currencyCode = currency === 'ZAR' ? 'en-ZA' : 'en-US';
+    return new Intl.NumberFormat(currencyCode, {
       style: 'currency',
-      currency: 'USD',
+      currency: currency,
       maximumFractionDigits: 0,
     }).format(price);
   };
 
+  // Use placeholder image if no image is provided
+  const imageUrl = property.image || 'https://via.placeholder.com/400x200?text=No+Image';
+
   return (
     <PropertyCardContainer onClick={() => onClick?.(property)}>
       <ImageContainer>
-        <Image src={property.image} alt={property.title} />
+        <Image src={imageUrl} alt={property.title || 'Property'} />
         <Badge type={property.type}>{property.type}</Badge>
-        {property.featured && <FeaturedBadge>Featured</FeaturedBadge>}
+        {property.sharing && <FeaturedBadge>Sharing</FeaturedBadge>}
       </ImageContainer>
       <Content>
-        <Price>{formatPrice(property.price)}</Price>
-        <Title>{property.title}</Title>
+        <Price>{formatPrice(property.monthlyPrice, property.currency)}</Price>
+        <Title>{property.title || 'Untitled Property'}</Title>
         <Address>{property.address}</Address>
         <Details>
           <DetailItem>
@@ -142,10 +147,12 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick })
             <DetailValue>{property.bathrooms}</DetailValue>
             <DetailLabel>Bathrooms</DetailLabel>
           </DetailItem>
-          <DetailItem>
-            <DetailValue>{property.sqft.toLocaleString()}</DetailValue>
-            <DetailLabel>Sq Ft</DetailLabel>
-          </DetailItem>
+          {property.sqmt !== null && (
+            <DetailItem>
+              <DetailValue>{Math.round(property.sqmt).toLocaleString()}</DetailValue>
+              <DetailLabel>Sq M</DetailLabel>
+            </DetailItem>
+          )}
         </Details>
       </Content>
     </PropertyCardContainer>

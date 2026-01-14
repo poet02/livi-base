@@ -1,91 +1,100 @@
 // hooks/usePropertySearch.ts
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 
 export interface Property {
-  id: string;
-  title: string;
-  price: number;
+  id: number;
+  title?: string | null;
+  dailyPrice?: number | null;
+  weeklyPrice?: number | null;
+  monthlyPrice: number;
+  currency: 'ZAR' | 'USD';
   address: string;
   bedrooms: number;
   bathrooms: number;
-  sqft: number;
-  image: string;
-  type: 'apartment' | 'house' | 'condo';
-  featured: boolean;
+  sqmt: number | null;
+  image?: string; // Temporary field for display, will be replaced with property images
+  type: 'room' | 'apartment' | 'house' | 'condo';
+  sharing: boolean;
 }
 
 const mockProperties: Property[] = [
   {
-    id: '1',
+    id: 1,
     title: 'Modern Downtown Apartmentttt',
-    price: 250000,
+    monthlyPrice: 250000,
+    currency: 'USD',
     address: '123 Main St, Downtown, NY',
     bedrooms: 2,
     bathrooms: 2,
-    sqft: 1200,
+    sqmt: 120,
     image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400',
     type: 'apartment',
-    featured: true
+    sharing: true
   },
   {
-    id: '2',
+    id: 2,
     title: 'Luxury Villa with Pool',
-    price: 750000,
+    monthlyPrice: 750000,
+    currency: 'USD',
     address: '456 Oak Ave, Beverly Hills, CA',
     bedrooms: 4,
     bathrooms: 3,
-    sqft: 3200,
+    sqmt: 320,
     image: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=400',
     type: 'house',
-    featured: true
+    sharing: true
   },
   {
-    id: '3',
+    id: 3,
     title: 'Cozy Studio Condo',
-    price: 150000,
+    monthlyPrice: 150000,
+    currency: 'USD',
     address: '789 Pine St, Seattle, WA',
     bedrooms: 1,
     bathrooms: 1,
-    sqft: 600,
+    sqmt: 60,
     image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400',
     type: 'condo',
-    featured: false
+    sharing: false
   },
   {
-    id: '4',
+    id: 4,
     title: 'Family Suburban Home',
-    price: 450000,
+    monthlyPrice: 450000,
+    currency: 'USD',
     address: '321 Elm St, Austin, TX',
     bedrooms: 3,
     bathrooms: 2,
-    sqft: 1800,
+    sqmt: 180,
     image: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=400',
     type: 'house',
-    featured: false
+    sharing: false
   },
   {
-    id: '5',
+    id: 5,
     title: 'Penthouse with City View',
-    price: 1200000,
+    monthlyPrice: 1200000,
+    currency: 'USD',
     address: '555 Skyline Dr, Miami, FL',
     bedrooms: 3,
     bathrooms: 3,
-    sqft: 2800,
+    sqmt: 280,
     image: 'https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?w=400',
     type: 'apartment',
-    featured: true
+    sharing: true
   },
   {
-    id: '6',
+    id: 6,
     title: 'Beachfront Condo',
-    price: 350000,
+    monthlyPrice: 350000,
+    currency: 'USD',
     address: '777 Beach Blvd, San Diego, CA',
     bedrooms: 2,
     bathrooms: 2,
-    sqft: 1100,
+    sqmt: 110,
     image: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400',
     type: 'condo',
-    featured: false
+    sharing: false
   }
 ];
 
@@ -99,7 +108,6 @@ export interface SearchFilters extends FilterOptions {
 }
 
 export const usePropertySearch = (searchFilters: SearchFilters) => {
-  const [properties, setProperties] = useState<Property[]>(mockProperties);
   const [loading, setLoading] = useState(false);
 
   const filteredProperties = useMemo(() => {
@@ -108,12 +116,12 @@ export const usePropertySearch = (searchFilters: SearchFilters) => {
     const filtered = mockProperties.filter(property => {
       // Search query filter
       const matchesQuery = searchFilters.query === '' || 
-        property.title.toLowerCase().includes(searchFilters.query.toLowerCase()) ||
+        (property.title && property.title.toLowerCase().includes(searchFilters.query.toLowerCase())) ||
         property.address.toLowerCase().includes(searchFilters.query.toLowerCase());
 
       // Price range filter
-      const matchesMinPrice = searchFilters.minPrice === 0 || property.price >= searchFilters.minPrice;
-      const matchesMaxPrice = searchFilters.maxPrice === 0 || property.price <= searchFilters.maxPrice;
+      const matchesMinPrice = searchFilters.minPrice === 0 || property.monthlyPrice >= searchFilters.minPrice;
+      const matchesMaxPrice = searchFilters.maxPrice === 0 || property.monthlyPrice <= searchFilters.maxPrice;
 
       return matchesQuery && matchesMinPrice && matchesMaxPrice;
     });

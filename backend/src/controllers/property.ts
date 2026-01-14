@@ -6,6 +6,7 @@ import {
   getPropertyById,
   updatePropertyById,
   deletePropertyById,
+  getUserProperties,
 } from '../services/propertyService';
 
 export const createPropertyController = async (
@@ -114,6 +115,28 @@ export const deletePropertyController = async (
 
     return res.status(200).json({
       msg: 'Property deleted successfully',
+      error: false,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getUserPropertiesController = async (
+  req: customRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new ApiError(401, 'User not authenticated');
+    }
+
+    const properties = await getUserProperties(parseInt(userId, 10));
+
+    return res.status(200).json({
+      data: properties,
       error: false,
     });
   } catch (err) {
