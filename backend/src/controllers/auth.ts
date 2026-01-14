@@ -4,11 +4,13 @@ import {
   updateUserById,
   userExists,
   validatePassword,
+  findUserByMobile,
 } from "../services/userService";
 import { NextFunction, Request, Response } from "express";
 import { omit } from "lodash";
 import { sign } from "../util/jwt";
 import { generateOTP, verifyOTP } from "../util/otp";
+import { authConfig } from "../config/config";
 // import { sendOTP } from "../helpers/mailHelper";
 import { ApiError } from "../util/ApiError";
 const omitData = ["password"];
@@ -50,6 +52,44 @@ const sendUserOtp = async (user: any) => {
   return true;
 }
 
+export const requestOTP = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { mobile } = req.body;
+
+    // Check if user exists, create if not
+    let user = await findUserByMobile(mobile);
+    
+    if (!user) {
+      // Auto-register user on first OTP request
+      user = await createUser({ mobile });
+    }
+
+    // Generate OTP (using static OTP for now)
+    // In production, this would send via Twilio
+    generateOTP(user.mobile);
+
+    // For now, we're using static OTP, so we don't actually send it
+    // In the future, this is where Twilio SMS would be sent
+    // await sendOTPViaTwilio(mobile, authConfig.staticOTP);
+
+    return res.status(200).json({
+      msg: "OTP sent successfully",
+      error: false,
+      // In development, you might want to return the OTP for testing
+      // Remove this in production!
+      ...(process.env.NODE_ENV === 'development' && { 
+        otp: authConfig.staticOTP 
+      }),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const loginUser = async (
   req: Request,
   res: Response,
@@ -58,38 +98,49 @@ export const loginUser = async (
   try {
     const { mobile, otp } = req.body;
 
-    const user = await findOneUser({ mobile });
+    const user = await findUserByMobile(mobile);
     if (!user) {
-      throw new ApiError(400, "Email id is incorrect");
+      throw new ApiError(400, "Mobile number is incorrect");
     }
 
-    // const validPassword = await validatePassword(user.email, password);
-    // if (!validPassword) {
-    //   throw new ApiError(400, "Password is incorrect");
-    // }
-    // const userData = omit(user?.toJSON(), omitData);
-    // const accessToken = sign({ ...userData });
-    const isValid = verifyOTP(user.mobile, otp);
+    // Verify OTP - check static OTP first, then verify generated OTP
+    let isValid = false;
+    if (otp === authConfig.staticOTP) {
+      // Static OTP for development
+      isValid = true;
+    } else {
+      // Verify generated OTP
+      isValid = verifyOTP(user.mobile, otp);
+    }
 
     if (!isValid) {
-      return res.status(400).send({
+      return res.status(400).json({
         error: true,
         errorMsg: "OTP is Incorrect",
       });
     }
 
     const userData = omit(user?.toJSON(), omitData);
-    const accessToken = sign({ ...userData });
+    // Include user ID and mobile in token for backend use
+    const accessToken = sign({ 
+      id: user.id,
+      mobile: user.mobile,
+      ...userData 
+    });
 
     return res.status(200).json({
       data: user,
       access_token: accessToken,
+      user: userData,
       error: false,
     });
   } catch (err) {
     next(err);
   }
 };
+
+// Alias for verifyOTP to maintain consistency
+export const verifyOTPController = loginUser;
 
 export const forgotPassword = async (
   req: Request,

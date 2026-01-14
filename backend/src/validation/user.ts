@@ -16,6 +16,15 @@ export const loginSchema = Joi.object({
   password: Joi.string().min(8).required(),
 });
 
+export const requestOTPSchema = Joi.object({
+  mobile: Joi.string().min(9).required(),
+});
+
+export const verifyOTPSchema = Joi.object({
+  mobile: Joi.string().min(9).required(),
+  otp: Joi.string().length(6).required(),
+});
+
 export const updateSchema = Joi.object({
   name: Joi.string().min(3).max(30),
   username: Joi.string(),

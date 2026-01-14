@@ -1,9 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { Login } from "./Pages/Login";
-import { Home } from "./Pages/Home";
 import { Profile } from "./Pages/Profile";
-import PWABadge from "./PWABadge";
 import { Properties } from "./Pages/Properties";
 import { Property } from "./Pages/Property";
 import { AddProperty } from "./Pages/AddProperty";
@@ -11,6 +9,8 @@ import { CircleUserRound, MapPinHouse } from "lucide-react";
 import { SearchPlaces } from "./Pages/SearchPlaces";
 import { Media } from "./Pages/Media";
 import { CameraProvider } from "./context/CameraContext";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./Components/ProtectedRoute";
 import { TestPage } from "./Pages/TestPage";
 import { Registration } from "./Pages/Registration";
 
@@ -58,13 +58,14 @@ function TabsLayout() {
   return (
     <Container>
       <Routes>
-        <Route path="/media" element={<Media />} />
-        <Route path="/profile" element={<Profile />} />
         <Route path="/register" element={<Registration />} />
-        <Route path="/properties" element={<Properties />} />
-        <Route path="/properties/:id" element={<Property />} />
-        <Route path="/properties/add" element={<AddProperty />} />
-        <Route path="/places" element={<SearchPlaces />} />
+        <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/properties" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
+        <Route path="/properties/:id" element={<ProtectedRoute><Property /></ProtectedRoute>} />
+        <Route path="/properties/add" element={<ProtectedRoute><AddProperty /></ProtectedRoute>} />
+        <Route path="/properties/add/:id" element={<ProtectedRoute><AddProperty /></ProtectedRoute>} />
+        <Route path="/places" element={<ProtectedRoute><SearchPlaces /></ProtectedRoute>} />
         <Route path="test-page" element={<TestPage />} />
       </Routes>
 
@@ -85,13 +86,16 @@ function TabsLayout() {
 // ----- App Root -----
 export default function App() {
   return (
-   <CameraProvider>
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/*" element={<TabsLayout />} />
-      </Routes>
-    </Router>
-   </CameraProvider>
+    <AuthProvider>
+      <CameraProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Login />} />
+            <Route path="/*" element={<TabsLayout />} />
+          </Routes>
+        </Router>
+      </CameraProvider>
+    </AuthProvider>
   );
 }

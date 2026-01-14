@@ -64,3 +64,7 @@ export const s3Config = {
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   bucketName: process.env.AWS_S3_BUCKET_NAME,
 };
+
+export const authConfig = {
+  staticOTP: process.env.STATIC_OTP || '123456',
+};

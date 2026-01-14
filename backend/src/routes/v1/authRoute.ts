@@ -5,12 +5,21 @@ import {
   loginUser,
   registerUser,
   resetPassword,
+  requestOTP,
+  verifyOTPController,
 } from "../../controllers/auth";
-import { loginSchema, registerSchema } from "../../validation/user";
+import { 
+  loginSchema, 
+  registerSchema, 
+  requestOTPSchema, 
+  verifyOTPSchema 
+} from "../../validation/user";
 const authRouter = Router();
 
 authRouter.post("/register", validateRequest(registerSchema), registerUser);
 authRouter.post("/login", validateRequest(loginSchema), loginUser);
+authRouter.post("/request-otp", validateRequest(requestOTPSchema), requestOTP);
+authRouter.post("/verify-otp", validateRequest(verifyOTPSchema), verifyOTPController);
 authRouter.post("/forgot-password", forgotPassword);
 authRouter.post("/reset-password", resetPassword);
 
