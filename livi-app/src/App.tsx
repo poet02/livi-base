@@ -62,9 +62,9 @@ function TabsLayout() {
         <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/properties" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
-        <Route path="/properties/:id" element={<ProtectedRoute><Property /></ProtectedRoute>} />
-        <Route path="/properties/add" element={<ProtectedRoute><AddProperty /></ProtectedRoute>} />
         <Route path="/properties/add/:id" element={<ProtectedRoute><AddProperty /></ProtectedRoute>} />
+        <Route path="/properties/add" element={<ProtectedRoute><AddProperty /></ProtectedRoute>} />
+        <Route path="/properties/:id" element={<ProtectedRoute><Property /></ProtectedRoute>} />
         <Route path="/places" element={<ProtectedRoute><SearchPlaces /></ProtectedRoute>} />
         <Route path="test-page" element={<TestPage />} />
       </Routes>

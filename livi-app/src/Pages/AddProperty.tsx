@@ -308,7 +308,6 @@ export function AddProperty() {
 
   // Handle back button
   const handleBack = () => {
-    console.log('handleBack');
     navigate(-1);
   };
 
@@ -363,7 +362,7 @@ export function AddProperty() {
       } else {
         // Create new property
         const response = await api.post('/v1/properties', payload);
-        console.log('Property created:', response.data);
+        // console.log('Property created:', response.data);
         
         // Extract property ID from response
         // Backend returns: { data: property, msg: string, error: boolean }
@@ -384,17 +383,17 @@ export function AddProperty() {
       const images = watch('images') || [];
       const imagesToUpload: ImageUploadData[] = [];
       
-      console.log('Collecting images for upload:', {
-        imagePreviewsCount: imagePreviews.length,
-        imagesCount: images.length,
-        existingImagesCount: existingImages.length,
-        imagePreviews: imagePreviews.map((p, i) => ({ index: i, preview: p?.substring(0, 50) || 'null' })),
-        images: images.map((img, i) => ({ index: i, fileName: img?.name || 'null', fileSize: img?.size || 0 })),
-        imageLocations: Array.from(imageLocations.entries()).map(([key, val]) => ({ 
-          key: key.substring(0, 50), 
-          location: val 
-        })),
-      });
+      // console.log('Collecting images for upload:', {
+      //   imagePreviewsCount: imagePreviews.length,
+      //   imagesCount: images.length,
+      //   existingImagesCount: existingImages.length,
+      //   imagePreviews: imagePreviews.map((p, i) => ({ index: i, preview: p?.substring(0, 50) || 'null' })),
+      //   images: images.map((img, i) => ({ index: i, fileName: img?.name || 'null', fileSize: img?.size || 0 })),
+      //   imageLocations: Array.from(imageLocations.entries()).map(([key, val]) => ({ 
+      //     key: key.substring(0, 50), 
+      //     location: val 
+      //   })),
+      // });
       
       // Collect new images (blob URLs) with their locations
       // The key is to match blob URLs in imagePreviews with File objects
@@ -422,15 +421,15 @@ export function AddProperty() {
                 location,
                 order: baseOrder + newImageCount,
               });
-              console.log(`✅ Added image ${newImageCount} to upload queue:`, {
-                previewIndex,
-                fileIndex,
-                preview: preview.substring(0, 50),
-                fileName: file.name,
-                fileSize: file.size,
-                location,
-                order: baseOrder + newImageCount,
-              });
+              // console.log(`✅ Added image ${newImageCount} to upload queue:`, {
+              //   previewIndex,
+              //   fileIndex,
+              //   preview: preview.substring(0, 50),
+              //   fileName: file.name,
+              //   fileSize: file.size,
+              //   location,
+              //   order: baseOrder + newImageCount,
+              // });
               fileIndex++; // Move to next file in images array
             } else {
               console.warn(`⚠️ File at index ${fileIndex} is not a File object:`, file);
@@ -444,17 +443,16 @@ export function AddProperty() {
         }
       });
 
-      console.log(`📊 Total images to upload: ${imagesToUpload.length}`, imagesToUpload.map(img => ({
-        fileName: img.file.name,
-        fileSize: img.file.size,
-        order: img.order,
-        hasLocation: !!img.location,
-      })));
+      // console.log(`📊 Total images to upload: ${imagesToUpload.length}`, imagesToUpload.map(img => ({
+      //   fileName: img.file.name,
+      //   fileSize: img.file.size,
+      //   order: img.order,
+      //   hasLocation: !!img.location,
+      // })));
 
       // Upload images to S3 and confirm with backend
       let uploadFailed = false;
       if (imagesToUpload.length > 0) {
-        console.log('Starting image upload to S3...');
         setUploadProgress({ current: 0, total: imagesToUpload.length });
         setUploadError(null);
         

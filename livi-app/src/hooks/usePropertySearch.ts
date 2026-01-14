@@ -17,7 +17,7 @@ export interface Property {
 const mockProperties: Property[] = [
   {
     id: '1',
-    title: 'Modern Downtown Apartment',
+    title: 'Modern Downtown Apartmentttt',
     price: 250000,
     address: '123 Main St, Downtown, NY',
     bedrooms: 2,
