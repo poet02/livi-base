@@ -217,6 +217,15 @@ EMAIL_FROM=admin@email.com
 OTP_EXPIRY_MIN=10
 OTP_SECRET=shgdbnbgw
 
+# AWS S3 Configuration (for image storage)
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your_access_key_id
+AWS_SECRET_ACCESS_KEY=your_secret_access_key
+AWS_S3_BUCKET_NAME=your-bucket-name
+
+# Static OTP for development
+STATIC_OTP=123456
+
 ```
 
 
@@ -291,6 +300,46 @@ Dockerfile          # Docker image definition
  npm install --save oracledb # for Oracle 
 ```
 for more details please refer [Sequelize](https://sequelize.org/docs/v6/getting-started/)
+## AWS S3 Configuration
+
+For image storage, the application uses AWS S3 with presigned URLs for secure access to private buckets.
+
+### IAM Permissions Required
+
+The IAM user needs the following permissions for S3:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:PutObjectAcl"
+            ],
+            "Resource": "arn:aws:s3:::YOUR_BUCKET_NAME/*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject"
+            ],
+            "Resource": "arn:aws:s3:::YOUR_BUCKET_NAME/*"
+        }
+    ]
+}
+```
+
+**Note**: `s3:GetObject` permission is required to generate presigned GET URLs for accessing images from private buckets.
+
+### S3 Bucket Setup
+
+1. Create an S3 bucket with "Block all public access" enabled (private bucket)
+2. Configure CORS to allow uploads from your frontend domain
+3. Create an IAM user with the permissions above
+4. Add AWS credentials to your `.env` file
+
 ## API Documentation
 
 To view the list of available APIs and their specifications, run the server and go to `http://localhost:5000/api/v1/docs` in your browser. This documentation page is automatically generated using the [swagger](https://swagger.io/) definitions written as comments in the route files.

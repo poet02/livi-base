@@ -1,6 +1,5 @@
 import {
   createUser,
-  findOneUser,
   updateUserById,
   userExists,
   validatePassword,

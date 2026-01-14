@@ -1,5 +1,6 @@
 import PropertyImage from '../models/PropertyImage';
 import Property from '../models/Property';
+import { generatePresignedGetUrl } from './s3Service';
 
 export interface ImageMetadata {
   s3Key: string;
@@ -44,6 +45,33 @@ export const getPropertyImages = async (
     order: [['order', 'ASC']],
   });
   return images;
+};
+
+/**
+ * Get property images with presigned URLs for private bucket access
+ * @param propertyId - Property ID
+ * @returns Array of images with presigned URLs
+ */
+export const getPropertyImagesWithPresignedUrls = async (
+  propertyId: number
+): Promise<Array<PropertyImage & { presignedUrl: string }>> => {
+  const images = await PropertyImage.findAll({
+    where: { propertyId },
+    order: [['order', 'ASC']],
+  });
+
+  // Generate presigned URLs for each image
+  const imagesWithUrls = await Promise.all(
+    images.map(async (image) => {
+      const presignedUrl = await generatePresignedGetUrl(image.s3Key);
+      return {
+        ...image.toJSON(),
+        presignedUrl,
+      };
+    })
+  );
+
+  return imagesWithUrls;
 };
 
 export const deletePropertyImage = async (

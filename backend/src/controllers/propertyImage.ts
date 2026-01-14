@@ -5,6 +5,7 @@ import { generatePresignedUrls } from '../services/s3Service';
 import {
   createPropertyImages,
   getPropertyImages,
+  getPropertyImagesWithPresignedUrls,
 } from '../services/propertyImageService';
 import { getPropertyById } from '../services/propertyService';
 
@@ -104,7 +105,8 @@ export const getPropertyImagesController = async (
       throw new ApiError(404, 'Property not found or you do not have permission');
     }
 
-    const images = await getPropertyImages(propertyId);
+    // Get images with presigned URLs for private bucket access
+    const images = await getPropertyImagesWithPresignedUrls(propertyId);
 
     return res.status(200).json({
       data: images,

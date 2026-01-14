@@ -12,6 +12,7 @@ import { PropertyImagesStep } from '../Components/PropertyForm/PropertyImagesSte
 import { ReviewStep } from '../Components/PropertyForm/ReviewStep';
 import { PropertyFormData } from '../Components/PropertyForm/types';
 import { api, handleApiError, ApiError } from '../helpers/apiHelper';
+import { uploadImagesToS3, ImageUploadData } from '../helpers/imageUploadHelper';
 
 // Mock data for editing - in real app, this would come from API
 const mockProperties = [
@@ -132,6 +133,26 @@ const SuccessMessage = styled.div`
   text-align: center;
 `;
 
+const UploadProgress = styled.div`
+  background: ${props => props.theme.colors.primary.main}15;
+  border: 1px solid ${props => props.theme.colors.primary.main}40;
+  padding: ${props => props.theme.spacing.md};
+  border-radius: ${props => props.theme.borderRadius.base};
+  margin-bottom: ${props => props.theme.spacing.base};
+  text-align: center;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const UploadError = styled.div`
+  background: ${props => props.theme.colors.error.main}15;
+  border: 1px solid ${props => props.theme.colors.error.main}40;
+  padding: ${props => props.theme.spacing.md};
+  border-radius: ${props => props.theme.borderRadius.base};
+  margin-bottom: ${props => props.theme.spacing.base};
+  text-align: center;
+  color: ${props => props.theme.colors.error.main};
+`;
+
 const defaultValues: PropertyFormData = {
   title: '',
   dailyPrice: undefined,
@@ -183,6 +204,8 @@ export function AddProperty() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [shouldSubmit, setShouldSubmit] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const {
     control,
@@ -330,31 +353,155 @@ export function AddProperty() {
 
       console.log('Sending property payload:', payload);
 
+      let propertyId: number;
+      
       if (isEditMode && id) {
         // Update existing property
         const response = await api.patch(`/v1/properties/${id}`, payload);
         console.log('Property updated:', response.data);
+        propertyId = parseInt(id, 10);
       } else {
         // Create new property
         const response = await api.post('/v1/properties', payload);
         console.log('Property created:', response.data);
+        
+        // Extract property ID from response
+        // Backend returns: { data: property, msg: string, error: boolean }
+        // API helper wraps it: { data: { data: property, msg, error }, ... }
+        // So response.data is the backend response, response.data.data is the property
+        const backendResponse = response.data;
+        const property = backendResponse.data || backendResponse;
+        propertyId = property?.id;
+        
+        if (!propertyId) {
+          throw new Error('Property ID not returned from server');
+        }
+      }
+
+      // Upload images if any
+      // Note: For edit mode, we only upload new images (blob URLs)
+      // Existing images are already in S3 and DB
+      const images = watch('images') || [];
+      const imagesToUpload: ImageUploadData[] = [];
+      
+      console.log('Collecting images for upload:', {
+        imagePreviewsCount: imagePreviews.length,
+        imagesCount: images.length,
+        existingImagesCount: existingImages.length,
+        imagePreviews: imagePreviews.map((p, i) => ({ index: i, preview: p?.substring(0, 50) || 'null' })),
+        images: images.map((img, i) => ({ index: i, fileName: img?.name || 'null', fileSize: img?.size || 0 })),
+        imageLocations: Array.from(imageLocations.entries()).map(([key, val]) => ({ 
+          key: key.substring(0, 50), 
+          location: val 
+        })),
+      });
+      
+      // Collect new images (blob URLs) with their locations
+      // The key is to match blob URLs in imagePreviews with File objects
+      // imagePreviews may contain both existing (URLs) and new (blob URLs) images
+      // images array only contains File objects for new images
+      let newImageCount = 0;
+      let fileIndex = 0; // Track position in images array (only new files)
+      
+      imagePreviews.forEach((preview, previewIndex) => {
+        // Only process blob URLs (new images), skip existing image URLs
+        if (preview && preview.startsWith('blob:')) {
+          // Find the corresponding file - it should be at fileIndex in the images array
+          // because images array only contains new files, not existing ones
+          if (fileIndex < images.length) {
+            const file = images[fileIndex];
+            if (file instanceof File) {
+              const location = imageLocations.get(preview);
+              newImageCount++;
+              // Order should be based on total images (existing + new)
+              // For new properties: just sequential 1, 2, 3...
+              // For edit mode: existing images already have orders, new ones continue
+              const baseOrder = isEditMode ? existingImages.length : 0;
+              imagesToUpload.push({
+                file,
+                location,
+                order: baseOrder + newImageCount,
+              });
+              console.log(`✅ Added image ${newImageCount} to upload queue:`, {
+                previewIndex,
+                fileIndex,
+                preview: preview.substring(0, 50),
+                fileName: file.name,
+                fileSize: file.size,
+                location,
+                order: baseOrder + newImageCount,
+              });
+              fileIndex++; // Move to next file in images array
+            } else {
+              console.warn(`⚠️ File at index ${fileIndex} is not a File object:`, file);
+            }
+          } else {
+            console.warn(`⚠️ No file found for blob preview at index ${previewIndex}. File index: ${fileIndex}, Images length: ${images.length}`);
+          }
+        } else if (preview && !preview.startsWith('blob:')) {
+          // This is an existing image (not a blob URL), skip it
+          // Don't increment fileIndex because existing images aren't in the images array
+        }
+      });
+
+      console.log(`📊 Total images to upload: ${imagesToUpload.length}`, imagesToUpload.map(img => ({
+        fileName: img.file.name,
+        fileSize: img.file.size,
+        order: img.order,
+        hasLocation: !!img.location,
+      })));
+
+      // Upload images to S3 and confirm with backend
+      let uploadFailed = false;
+      if (imagesToUpload.length > 0) {
+        console.log('Starting image upload to S3...');
+        setUploadProgress({ current: 0, total: imagesToUpload.length });
+        setUploadError(null);
+        
+        try {
+          await uploadImagesToS3(
+            propertyId,
+            imagesToUpload,
+            (current, total) => {
+              setUploadProgress({ current, total });
+            }
+          );
+          
+          // Clean up blob URLs after successful upload
+          imagePreviews.forEach((preview) => {
+            if (preview.startsWith('blob:')) {
+              URL.revokeObjectURL(preview);
+            }
+          });
+        } catch (error) {
+          console.error('Error uploading images:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Failed to upload images';
+          setUploadError(errorMessage);
+          uploadFailed = true;
+          // Don't throw - property was created successfully, images can be added later
+        } finally {
+          setUploadProgress(null);
+        }
       }
 
       // Show success message
       setShowSuccess(true);
-      // return;
 
-      // Reset form after success
-      setTimeout(() => {
-        // reset(defaultValues);
-        // setImagePreviews([]);
-        // setExistingImages([]);
-        // setImageLocations(new Map());
-        setShowSuccess(false);
-        // setCurrentStep(1);
-        // setCompletedSteps([]);
-        // navigate('/properties');
-      }, 2000);
+      // Reset form after success (only if no upload error)
+      if (!uploadFailed) {
+        setTimeout(() => {
+          reset(defaultValues);
+          setImagePreviews([]);
+          setExistingImages([]);
+          setImageLocations(new Map());
+          setShowSuccess(false);
+          setUploadProgress(null);
+          setUploadError(null);
+          setCurrentStep(1);
+          setCompletedSteps([]);
+          navigate('/properties');
+        }, 2000);
+      }
 
     } catch (error) {
       console.error('Error submitting property:', error);
@@ -448,8 +595,27 @@ export function AddProperty() {
       <FormContainer>
         {showSuccess && (
           <SuccessMessage>
-            Property {isEditMode ? 'updated' : 'added'} successfully! Redirecting...
+            Property {isEditMode ? 'updated' : 'added'} successfully!
+            {uploadProgress && (
+              <div style={{ marginTop: '8px' }}>
+                Uploading images... {uploadProgress.current} of {uploadProgress.total}
+              </div>
+            )}
+            {!uploadProgress && !uploadError && ' Redirecting...'}
           </SuccessMessage>
+        )}
+        {uploadProgress && !showSuccess && (
+          <UploadProgress>
+            Uploading images... {uploadProgress.current} of {uploadProgress.total}
+          </UploadProgress>
+        )}
+        {uploadError && (
+          <UploadError>
+            ⚠️ {uploadError}
+            <div style={{ marginTop: '8px', fontSize: '0.9em' }}>
+              Property was created successfully. You can add images later by editing the property.
+            </div>
+          </UploadError>
         )}
 
         <Form 

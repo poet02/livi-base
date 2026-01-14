@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3Config } from '../config/config';
 
@@ -12,6 +12,7 @@ const s3Client = new S3Client({
 });
 
 const PRESIGNED_URL_EXPIRATION = 15 * 60; // 15 minutes in seconds
+const PRESIGNED_GET_URL_EXPIRATION = 3600; // 1 hour in seconds
 
 /**
  * Generate a presigned URL for uploading an image to S3
@@ -73,5 +74,31 @@ export const generatePresignedUrls = async (
 
   const results = await Promise.all(promises);
   return results;
+};
+
+/**
+ * Generate a presigned URL for retrieving an image from S3
+ * @param key - S3 object key (path)
+ * @param expiresIn - Expiration time in seconds (default: 1 hour)
+ * @returns Presigned URL string
+ */
+export const generatePresignedGetUrl = async (
+  key: string,
+  expiresIn: number = PRESIGNED_GET_URL_EXPIRATION
+): Promise<string> => {
+  if (!s3Config.bucketName) {
+    throw new Error('AWS S3 bucket name is not configured');
+  }
+
+  const command = new GetObjectCommand({
+    Bucket: s3Config.bucketName,
+    Key: key,
+  });
+
+  const url = await getSignedUrl(s3Client, command, {
+    expiresIn,
+  });
+
+  return url;
 };
 
