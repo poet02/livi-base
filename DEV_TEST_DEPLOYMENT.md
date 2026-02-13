@@ -378,16 +378,17 @@ Since RDS is publicly accessible:
    ```bash
    cd livi-app
    
-   # Set API URL (use your ALB DNS name)
-   export VITE_API_BASE_URL=http://[ALB_DNS_NAME]/api
+   # Set API URL (use HTTPS custom domain to avoid mixed-content errors)
+   export VITE_API_BASE_URL=https://api.[YOUR_DOMAIN]/api
    
    yarn build
    ```
+   - If you haven’t set up HTTPS yet, use `http://[ALB_DNS_NAME]/api` temporarily
 
 2. **Upload to S3:**
    ```bash
    # Upload all files
-   aws s3 sync dist/ s3://[YOUR_S3_BUCKET_NAME] --delete
+   aws s3 sync dist/ s3://livi-dev-frontend --delete
    
    # Or upload with proper cache headers
    aws s3 sync dist/ s3://[YOUR_S3_BUCKET_NAME] \
@@ -408,7 +409,7 @@ Since RDS is publicly accessible:
 3. **Invalidate CloudFront cache:**
    ```bash
    aws cloudfront create-invalidation \
-     --distribution-id [YOUR_DISTRIBUTION_ID] \
+     --distribution-id EI5HM0NXWH481\
      --paths "/*"
    ```
 
@@ -416,7 +417,7 @@ Since RDS is publicly accessible:
 
 1. **Test backend:**
    ```bash
-   curl http://[ALB_DNS_NAME]/api/
+   curl https://api.[YOUR_DOMAIN]/api/
    # Should return: {"msg":"server is up..","user":null}
    ```
 
@@ -427,6 +428,7 @@ Since RDS is publicly accessible:
 3. **Test API from frontend:**
    - Try logging in or making API calls
    - Check browser console for errors
+   - If you see CORS errors, add your frontend URL(s) to `FRONTEND_URLS` in the ECS task definition and redeploy
 
 ## Step 15: Configure GitHub Secrets for CI/CD (Required for Automatic Deployment)
 
