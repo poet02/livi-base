@@ -1,19 +1,19 @@
-name: Dev/Test Frontend Deploy
+name: Prod Frontend Deploy
 
 on:
   push:
     branches:
-      - devtest
+      - main
     paths:
       - 'livi-app/**'
-      - '.github/workflows/devtest-frontend.yml'
+      - '.github/workflows/prod-frontend.yml'
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    environment: devtest
-    
+    environment: prod
+
     defaults:
       run:
         working-directory: ./livi-app
@@ -38,8 +38,7 @@ jobs:
 
       - name: Build with environment variables
         env:
-          # Use GitHub secret for API URL, fallback to localhost for testing
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || 'http://localhost:7000/api' }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
         run: yarn build
 
       - name: Configure AWS credentials
@@ -58,7 +57,7 @@ jobs:
             --exclude "*.html" \
             --exclude "service-worker.js" \
             --exclude "sw.js"
-          
+
           # Upload HTML and service worker with no cache
           aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} \
             --delete \
@@ -73,18 +72,11 @@ jobs:
             --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: livi-app/dist
-          retention-days: 7
-
       - name: Deployment summary
         run: |
-          echo "## ✅ Frontend Deployed Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Prod Frontend Deployed Successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**S3 Bucket:** \`${{ secrets.S3_BUCKET_NAME }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**CloudFront Distribution:** \`${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**API URL:** \`${{ secrets.VITE_API_BASE_URL || 'Not configured' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**API URL:** \`${{ secrets.VITE_API_BASE_URL }}\`" >> $GITHUB_STEP_SUMMARY
 

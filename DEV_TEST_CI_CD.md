@@ -6,8 +6,8 @@ This document explains the automatic deployment setup for the `devtest` branch.
 
 When you push code to the `devtest` branch, GitHub Actions will automatically:
 - ✅ Build and deploy backend to ECS
+- ✅ Run database migrations
 - ✅ Build and deploy frontend to S3/CloudFront
-- ❌ **NOT run database migrations** (manual only)
 
 ## Workflows
 
@@ -22,10 +22,11 @@ When you push code to the `devtest` branch, GitHub Actions will automatically:
 2. Installs dependencies
 3. Runs linting
 4. Builds TypeScript
-5. Builds Docker image
-6. Pushes to ECR
-7. Updates ECS service with new image
-8. Waits for service to stabilize
+5. Runs database migrations
+6. Builds Docker image
+7. Pushes to ECR
+8. Updates ECS service with new image
+9. Waits for service to stabilize
 
 **Time:** ~5-10 minutes
 
@@ -60,6 +61,12 @@ Configure these in: **GitHub → Settings → Secrets and variables → Actions*
 | `S3_BUCKET_NAME` | S3 bucket name | `livi-dev-frontend-123456789` |
 | `CLOUDFRONT_DISTRIBUTION_ID` | CloudFront distribution ID | `E1234567890ABC` |
 | `VITE_API_BASE_URL` | Backend API URL for frontend builds | `http://livi-dev-alb-xxx.elb.amazonaws.com/api` |
+| `DB_HOST` | RDS endpoint | `devtest-livi-db.xxxxx.eu-west-1.rds.amazonaws.com` |
+| `DB_PORT` | RDS port | `5432` |
+| `DB_TYPE` | Database type | `postgres` |
+| `DB_NAME` | Database name | `postgres` |
+| `DB_USER` | Database user | `livi_admin` |
+| `DB_PASSWORD` | Database password | `********` |
 
 ## How to Use
 
@@ -95,9 +102,9 @@ You can also trigger deployments manually:
 
 ## Database Migrations
 
-**Migrations are NOT run automatically** for safety reasons.
+**Migrations are run automatically** during the backend workflow.
 
-### To Run Migrations Manually:
+### To Run Migrations Manually (optional):
 
 **Option 1: Direct Connection (Easiest)**
 ```bash

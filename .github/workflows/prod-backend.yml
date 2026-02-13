@@ -1,19 +1,19 @@
-name: Dev/Test Backend Deploy
+name: Prod Backend Deploy
 
 on:
   push:
     branches:
-      - devtest
+      - main
     paths:
       - 'backend/**'
-      - '.github/workflows/devtest-backend.yml'
+      - '.github/workflows/prod-backend.yml'
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    environment: devtest
-    
+    environment: prod
+
     defaults:
       run:
         working-directory: ./backend
@@ -63,11 +63,7 @@ jobs:
       - name: Set image tag
         id: image-tag
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "tag=pr-${{ github.event.pull_request.number }}-${{ github.sha }}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=devtest-${{ github.sha }}" >> $GITHUB_OUTPUT
-          fi
+          echo "tag=prod-${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
@@ -105,16 +101,9 @@ jobs:
           cluster: ${{ secrets.ECS_CLUSTER_NAME }}
           wait-for-service-stability: true
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-dist
-          path: backend/dist
-          retention-days: 7
-
       - name: Deployment summary
         run: |
-          echo "## ✅ Backend Deployed Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Prod Backend Deployed Successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Image:** \`${{ steps.build-image.outputs.image-latest }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Service:** \`${{ secrets.ECS_SERVICE_NAME }}\`" >> $GITHUB_STEP_SUMMARY

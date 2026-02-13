@@ -470,14 +470,20 @@ Since RDS is publicly accessible:
    ECS_SERVICE_NAME (livi-dev-backend-service)
    S3_BUCKET_NAME (your S3 bucket name)
    CLOUDFRONT_DISTRIBUTION_ID (your distribution ID)
-   VITE_API_BASE_URL (http://[ALB_DNS_NAME]/api)
+   VITE_API_BASE_URL (https://api.[YOUR_DOMAIN]/api)
+   DB_HOST (RDS endpoint)
+   DB_PORT (5432)
+   DB_TYPE (postgres)
+   DB_NAME (postgres or livi_db)
+   DB_USER (livi_admin)
+   DB_PASSWORD (your DB password)
    ```
 
 3. **How it works:**
    - Push to `devtest` branch → Automatic deployment
-   - Backend changes → Builds Docker image → Pushes to ECR → Updates ECS service
+   - Backend changes → Runs migrations → Builds Docker image → Pushes to ECR → Updates ECS service
    - Frontend changes → Builds React app → Uploads to S3 → Invalidates CloudFront
-   - **Migrations are NOT run automatically** (manual only for safety)
+   - **Migrations are run automatically** during backend deployment
 
 ## Step 16: Test Automatic Deployment
 
@@ -501,7 +507,7 @@ After configuring GitHub Secrets (Step 15), test the automatic deployment:
    - Verify deployment succeeds
 
 3. **Verify deployment:**
-   - Test backend: `curl http://[ALB_DNS]/api/`
+   - Test backend: `curl https://api.[YOUR_DOMAIN]/api/`
    - Test frontend: Open `https://[CLOUDFRONT_DOMAIN]`
 
 ## Quick Reference: Resource Names
