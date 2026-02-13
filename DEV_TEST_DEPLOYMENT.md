@@ -372,6 +372,29 @@ Since RDS is publicly accessible:
    npm run db:migrate ✅
    ```
 
+## Step 12.5: Enable HTTPS for Backend API (ACM + ALB) (10–20 minutes)
+
+1. **Request ACM certificate (eu-west-1):**
+   - ACM → Request certificate → Public
+   - Domain: `api.[YOUR_DOMAIN]`
+   - Validation: DNS
+
+2. **Add DNS validation record (Squarespace or your DNS provider):**
+   - Add the CNAME **exactly** as shown in ACM
+   - Wait for status to become **Issued**
+
+3. **Point API subdomain to ALB:**
+   - Add CNAME: `api` → `[ALB_DNS_NAME]`
+
+4. **Add HTTPS listener on ALB:**
+   - EC2 → Load Balancers → `livi-dev-alb` → Listeners → Add listener
+   - Protocol: **HTTPS**, Port: **443**
+   - Certificate: `api.[YOUR_DOMAIN]`
+   - Default action: Forward to `livi-dev-backend-tg`
+
+5. **Update ALB security group:**
+   - Allow inbound **HTTPS (443)** from `0.0.0.0/0`
+
 ## Step 13: Deploy Frontend to S3 (5 minutes)
 
 1. **Build frontend:**
@@ -412,6 +435,7 @@ Since RDS is publicly accessible:
      --distribution-id EI5HM0NXWH481\
      --paths "/*"
    ```
+   - If you see `AccessDenied` when loading the site, set CloudFront **Default root object** to `index.html` and invalidate again
 
 ## Step 14: Test Deployment (5 minutes)
 
