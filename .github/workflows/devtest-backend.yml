@@ -17,6 +17,8 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
+    
+    # jq is pre-installed on GitHub Actions runners
 
     steps:
       - name: Checkout code
@@ -100,7 +102,11 @@ jobs:
           # Download the task definition (file will be in backend/ due to defaults.run.working-directory)
           aws ecs describe-task-definition \
             --task-definition $TASK_DEF \
-            --query taskDefinition > task-definition.json
+            --query taskDefinition > task-definition-raw.json
+          
+          # Remove fields that are not valid for RegisterTaskDefinition API
+          # These fields come from the service description, not the task definition
+          cat task-definition-raw.json | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .enableFaultInjection)' > task-definition.json
           
           # Verify file was created
           if [ ! -f task-definition.json ]; then
@@ -108,7 +114,7 @@ jobs:
             exit 1
           fi
           
-          echo "Task definition downloaded successfully"
+          echo "Task definition downloaded and cleaned successfully"
           
           # Move file to repo root so action can find it
           mv task-definition.json ../task-definition.json
