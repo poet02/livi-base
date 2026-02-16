@@ -36,6 +36,7 @@ Thumbs.db
 
 # Ignore built ts files
 dist/**/*
+dev-dist/
 
 # ignore yarn.lock (allow app-level lockfiles)
 !backend/yarn.lock
