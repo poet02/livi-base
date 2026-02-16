@@ -172,6 +172,7 @@ const PreviewImage = styled.img`
   max-height: 70vh;
   object-fit: contain;
   border-radius: 8px;
+  transform: scaleX(-1); /* Mirror effect to match video feed */
 `;
 
 const PreviewControls = styled.div`
