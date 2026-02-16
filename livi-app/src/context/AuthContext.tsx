@@ -69,7 +69,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value: AuthContextType = {
     user,
-    isAuthenticated: !!user && authService.isAuthenticated(),
+    isAuthenticated: authService.isAuthenticated(),
     isLoading,
     requestOTP,
     verifyOTP,

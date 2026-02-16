@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 import styled from "styled-components";
 import { Login } from "./Pages/Login";
 import { Profile } from "./Pages/Profile";
@@ -9,7 +9,7 @@ import { CircleUserRound, MapPinHouse } from "lucide-react";
 import { SearchPlaces } from "./Pages/SearchPlaces";
 import { Media } from "./Pages/Media";
 import { CameraProvider } from "./context/CameraContext";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ProtectedRoute } from "./Components/ProtectedRoute";
 import { Registration } from "./Pages/Registration";
 
@@ -81,6 +81,16 @@ function TabsLayout() {
   );
 }
 
+function RootRoute() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  return isAuthenticated ? <Navigate to="/properties" replace /> : <Navigate to="/login" replace />;
+}
+
 // ----- App Root -----
 export default function App() {
   return (
@@ -89,7 +99,7 @@ export default function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<RootRoute />} />
             <Route path="/*" element={<TabsLayout />} />
           </Routes>
         </Router>

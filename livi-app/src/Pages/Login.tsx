@@ -27,7 +27,7 @@ const OTPInput = styled(Input)`
 
 export function Login() {
   const navigate = useNavigate();
-  const { requestOTP, verifyOTP, isLoading } = useAuth();
+  const { requestOTP, verifyOTP, isLoading, isAuthenticated } = useAuth();
   
   const [mobile, setMobile] = useState("");
   const [otp, setOtp] = useState("");
@@ -36,12 +36,10 @@ export function Login() {
   const [info, setInfo] = useState("");
 
   useEffect(() => {
-    // Clear any stale auth on login screen
-    localStorage.removeItem("authToken");
-    sessionStorage.removeItem("authToken");
-    localStorage.removeItem("userData");
-    sessionStorage.removeItem("userData");
-  }, []);
+    if (!isLoading && isAuthenticated) {
+      navigate("/properties");
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const handleRequestOTP = async () => {
     if (mobile.trim().length < 9) {
