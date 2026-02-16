@@ -143,6 +143,43 @@ const UploadProgress = styled.div`
   color: ${props => props.theme.colors.text.primary};
 `;
 
+const ProgressBarContainer = styled.div`
+  margin-top: ${props => props.theme.spacing.sm};
+  width: 100%;
+`;
+
+const ProgressBar = styled.div<{ progress: number }>`
+  width: 100%;
+  height: 8px;
+  background: ${props => props.theme.colors.grey[200]};
+  border-radius: ${props => props.theme.borderRadius.full};
+  overflow: hidden;
+  margin-top: ${props => props.theme.spacing.xs};
+
+  &::after {
+    content: '';
+    display: block;
+    width: ${props => props.progress}%;
+    height: 100%;
+    background: ${props => props.theme.colors.primary.main};
+    transition: width 0.3s ease;
+  }
+`;
+
+const StatusStep = styled.div<{ completed: boolean; active: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: ${props => props.theme.spacing.sm};
+  padding: ${props => props.theme.spacing.sm};
+  margin-bottom: ${props => props.theme.spacing.xs};
+  color: ${props => {
+    if (props.completed) return props.theme.colors.success.main;
+    if (props.active) return props.theme.colors.primary.main;
+    return props.theme.colors.text.secondary;
+  }};
+  font-size: ${props => props.theme.typography.fontSize.sm};
+`;
+
 const UploadError = styled.div`
   background: ${props => props.theme.colors.error.main}15;
   border: 1px solid ${props => props.theme.colors.error.main}40;
@@ -206,6 +243,7 @@ export function AddProperty() {
   const shouldSubmitRef = useRef(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [propertyCreationStatus, setPropertyCreationStatus] = useState<'idle' | 'creating' | 'created' | 'error'>('idle');
 
   const {
     control,
@@ -362,6 +400,7 @@ export function AddProperty() {
         const response = await api.patch(`/v1/properties/${id}`, payload);
         console.log('Property updated:', response.data);
         propertyId = parseInt(id, 10);
+        setPropertyCreationStatus('created');
       } else {
         // Create new property
         const response = await api.post('/v1/properties', payload);
@@ -381,6 +420,8 @@ export function AddProperty() {
         if (!propertyId) {
           throw new Error('Property ID not returned from server');
         }
+        
+        setPropertyCreationStatus('created');
       }
 
       // Upload images if any
@@ -501,6 +542,7 @@ export function AddProperty() {
           setShowSuccess(false);
           setUploadProgress(null);
           setUploadError(null);
+          setPropertyCreationStatus('idle');
           setCurrentStep(1);
           setCompletedSteps([]);
           navigate('/properties');
@@ -509,6 +551,7 @@ export function AddProperty() {
 
     } catch (error) {
       console.error('Error submitting property:', error);
+      setPropertyCreationStatus('error');
       const apiError = error as ApiError;
       handleApiError(apiError, (err) => {
         // Custom error handling - you can show a toast or error message here
@@ -597,21 +640,57 @@ export function AddProperty() {
       />
 
       <FormContainer>
-        {showSuccess && (
-          <SuccessMessage>
-            Property {isEditMode ? 'updated' : 'added'} successfully!
+        {(isSubmitting || propertyCreationStatus !== 'idle' || uploadProgress) && (
+          <UploadProgress>
+            <div style={{ marginBottom: '8px', fontWeight: 600 }}>
+              {propertyCreationStatus === 'creating' && 'Creating property...'}
+              {propertyCreationStatus === 'created' && !uploadProgress && 'Property created successfully!'}
+              {propertyCreationStatus === 'created' && uploadProgress && 'Uploading images...'}
+            </div>
+            
+            {propertyCreationStatus === 'creating' && (
+              <StatusStep completed={false} active={true}>
+                <span>⏳</span>
+                <span>Creating property...</span>
+              </StatusStep>
+            )}
+            
+            {propertyCreationStatus === 'created' && (
+              <StatusStep completed={true} active={false}>
+                <span>✅</span>
+                <span>Property {isEditMode ? 'updated' : 'created'} successfully</span>
+              </StatusStep>
+            )}
+            
             {uploadProgress && (
-              <div style={{ marginTop: '8px' }}>
-                Uploading images... {uploadProgress.current} of {uploadProgress.total}
+              <>
+                <StatusStep 
+                  completed={uploadProgress.current === uploadProgress.total} 
+                  active={uploadProgress.current < uploadProgress.total}
+                >
+                  <span>{uploadProgress.current === uploadProgress.total ? '✅' : '⏳'}</span>
+                  <span>
+                    Uploading images: {uploadProgress.current} of {uploadProgress.total}
+                  </span>
+                </StatusStep>
+                <ProgressBarContainer>
+                  <ProgressBar progress={(uploadProgress.current / uploadProgress.total) * 100} />
+                </ProgressBarContainer>
+              </>
+            )}
+            
+            {propertyCreationStatus === 'created' && !uploadProgress && !uploadError && (
+              <div style={{ marginTop: '8px', fontSize: '0.9em', opacity: 0.8 }}>
+                Redirecting...
               </div>
             )}
-            {!uploadProgress && !uploadError && ' Redirecting...'}
-          </SuccessMessage>
-        )}
-        {uploadProgress && !showSuccess && (
-          <UploadProgress>
-            Uploading images... {uploadProgress.current} of {uploadProgress.total}
           </UploadProgress>
+        )}
+        
+        {showSuccess && !isSubmitting && !uploadProgress && (
+          <SuccessMessage>
+            Property {isEditMode ? 'updated' : 'added'} successfully!
+          </SuccessMessage>
         )}
         {uploadError && (
           <UploadError>

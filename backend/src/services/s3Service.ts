@@ -3,13 +3,24 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3Config } from '../config/config';
 
 // Initialize S3 client
-const s3Client = new S3Client({
+// Use explicit credentials if provided, otherwise use default credential provider chain
+// (which will use IAM role in ECS, or environment variables, or EC2 instance profile)
+const s3ClientConfig: {
+  region: string;
+  credentials?: { accessKeyId: string; secretAccessKey: string };
+} = {
   region: s3Config.region,
-  credentials: s3Config.accessKeyId && s3Config.secretAccessKey ? {
+};
+
+// Only add credentials if both are provided
+if (s3Config.accessKeyId && s3Config.secretAccessKey) {
+  s3ClientConfig.credentials = {
     accessKeyId: s3Config.accessKeyId,
     secretAccessKey: s3Config.secretAccessKey,
-  } : undefined,
-});
+  };
+}
+
+const s3Client = new S3Client(s3ClientConfig);
 
 const PRESIGNED_URL_EXPIRATION = 15 * 60; // 15 minutes in seconds
 const PRESIGNED_GET_URL_EXPIRATION = 3600; // 1 hour in seconds
