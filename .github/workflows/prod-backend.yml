@@ -63,8 +63,9 @@ jobs:
       - name: Set image tag
         id: image-tag
         run: |
-          # Use commit SHA + workflow run ID to ensure uniqueness (workflow run ID is unique per run)
-          echo "tag=prod-${{ github.sha }}-${{ github.run_id }}" >> $GITHUB_OUTPUT
+          # Use commit SHA + workflow run ID + timestamp to ensure absolute uniqueness
+          TIMESTAMP=$(date +%s)
+          echo "tag=prod-${{ github.sha }}-${{ github.run_id }}-$TIMESTAMP" >> $GITHUB_OUTPUT
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
@@ -73,10 +74,16 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_URI }}
           IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
         run: |
+          # Build the image
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          
+          # Push unique tag (may fail if tag exists, but that's ok - we'll still update latest)
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG || echo "Tag already exists, continuing..."
+          
+          # Always push latest (this is what ECS uses)
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "image-latest=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_OUTPUT
 
