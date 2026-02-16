@@ -304,6 +304,8 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const capturedBlobRef = useRef<Blob | null>(null);
+  const startTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isClosingRef = useRef(false);
 
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -315,6 +317,11 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
   const { setActiveStream, stopCamera: globalStopCamera } = useCamera();
 
   const cleanupCamera = useCallback(() => {
+    isClosingRef.current = true;
+    if (startTimerRef.current) {
+      clearTimeout(startTimerRef.current);
+      startTimerRef.current = null;
+    }
     if (stream) {
       stream.getTracks().forEach(track => {
         track.stop();
@@ -371,6 +378,9 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
   }, [setActiveStream]);
 
   const startCamera = useCallback(async () => {
+    if (isClosingRef.current) {
+      return;
+    }
     try {
       setIsLoading(true);
       setCameraError('');
@@ -407,12 +417,15 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
 
   // Initialize camera
   useEffect(() => {
-    const timer = setTimeout(() => {
+    startTimerRef.current = setTimeout(() => {
       startCamera();
     }, 100);
 
     return () => {
-      clearTimeout(timer);
+      if (startTimerRef.current) {
+        clearTimeout(startTimerRef.current);
+        startTimerRef.current = null;
+      }
       cleanupCamera();
     };
   }, [startCamera, cleanupCamera]);
@@ -596,6 +609,9 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
   };
 
   const retryCamera = () => {
+    if (isClosingRef.current) {
+      isClosingRef.current = false;
+    }
     setCameraError('');
     startCamera();
   };
