@@ -9,6 +9,7 @@ import { Button as BaseButton } from '../styles/common';
 import { media } from '../styles/common';
 import { MapboxGeocoder } from '../Components/PropertyForm/MapboxGeocoder';
 import { MapboxFeature } from '../Components/PropertyForm/types';
+import type { PlaceToStay } from '../types/search';
 
 const Container = styled.div`
   height: 100vh;
@@ -210,7 +211,7 @@ export function SearchPlaces() {
         isSearching,
         hasSearched,
         executeSearch,
-        useCurrentLocation,
+        requestCurrentLocation,
         clearSearch
     } = usePlaceSearch();
 
@@ -225,15 +226,16 @@ export function SearchPlaces() {
     };
 
     const handleUseCurrentLocation = () => {
-        useCurrentLocation();
+        requestCurrentLocation();
     };
 
-    const handlePlaceClick = (place: any) => {
+    const handlePlaceClick = (place: PlaceToStay) => {
         // Navigate to property details or show more info
         navigate(`/properties/${place.id}`);
     };
 
-    const handleDestinationClick = (destination: any) => {
+    type Destination = typeof popularDestinations[number];
+    const handleDestinationClick = (destination: Destination) => {
         // For popular destinations, we'll need coordinates
         // For now, just set the address and let user search
         setSearchLocation({

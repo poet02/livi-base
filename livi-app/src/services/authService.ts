@@ -1,11 +1,11 @@
-import { api, handleApiError, ApiError } from '../helpers/apiHelper';
+import { api, handleApiError, type ApiError } from '../helpers/apiHelper';
 
 export interface User {
   id: number;
   mobile: string;
   name?: string;
   surname?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface AuthResponse {
@@ -31,7 +31,7 @@ class AuthService {
       if (!response.success) {
         throw new Error(response.message || 'Failed to request OTP');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       const apiError = error as ApiError;
       handleApiError(apiError);
       throw error;
@@ -67,7 +67,7 @@ class AuthService {
         token,
         user: user || { id: 0, mobile },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       const apiError = error as ApiError;
       handleApiError(apiError);
       throw error;

@@ -6,7 +6,7 @@ export interface ChipProps {
   variant?: 'filled' | 'outlined';
   color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';
   size?: 'small' | 'medium' | 'large';
-  onDelete?: (e:any) => void;
+  onDelete?: (label: string) => void;
   onClick?: () => void;
   disabled?: boolean;
   avatar?: React.ReactNode;
@@ -178,7 +178,7 @@ const Chip: React.FC<ChipProps> = ({
     onClick?.();
   };
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled) return;
     e.stopPropagation();
     onDelete?.(label);

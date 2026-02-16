@@ -34,7 +34,7 @@ jobs:
 
       - name: Run linting
         run: yarn lint
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Build with environment variables
         env:

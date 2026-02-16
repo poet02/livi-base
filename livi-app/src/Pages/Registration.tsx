@@ -77,8 +77,9 @@ export function Registration() {
         localStorage.setItem("authToken", response.accessToken);
         navigate("/places");
       }
-    } catch (err: any) {
-      setApiError(err.message || "Registration failed. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Registration failed. Please try again.";
+      setApiError(message);
     } finally {
       setLoading(false);
     }

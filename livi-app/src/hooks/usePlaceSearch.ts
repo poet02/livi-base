@@ -1,5 +1,5 @@
 // hooks/usePlaceSearch.ts
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { PlaceToStay, SearchFilters, SearchLocation } from '../types/search';
 import { api, handleApiError, ApiError } from '../helpers/apiHelper';
 
@@ -23,6 +23,15 @@ export function usePlaceSearch() {
   const [hasSearched, setHasSearched] = useState(false);
   const [searchResults, setSearchResults] = useState<PlaceToStay[]>([]);
 
+  const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null;
+
+  const toNumber = (value: unknown, fallback = 0): number =>
+    typeof value === 'number' ? value : fallback;
+
+  const toString = (value: unknown, fallback = ''): string =>
+    typeof value === 'string' ? value : fallback;
+
   const executeSearch = async () => {
     if (!searchLocation.latitude || !searchLocation.longitude) {
       alert('Please select a location or use your current location');
@@ -36,7 +45,7 @@ export function usePlaceSearch() {
       // Convert radius from km to meters (filters.radius is in km, API expects meters)
       const radiusInMeters = filters.radius * 1000;
 
-      const response = await api.get<{ data: any[]; error: boolean }>(
+      const response = await api.get<{ data: unknown; error: boolean }>(
         `/v1/properties/search?latitude=${searchLocation.latitude}&longitude=${searchLocation.longitude}&radius=${radiusInMeters}`
       );
 
@@ -47,48 +56,49 @@ export function usePlaceSearch() {
       // Extract properties from response
       // API helper wraps response: { data: { data: [...], error }, success, status, message }
       // So response.data is the backend response object
-      const backendResponse = response.data as any;
-      
+      const backendResponse = response.data as unknown;
+
       // Handle different response structures
-      let propertiesData: any[] = [];
-      if (Array.isArray(backendResponse)) {
-        propertiesData = backendResponse;
-      } else if (backendResponse && Array.isArray(backendResponse.data)) {
-        propertiesData = backendResponse.data;
-      } else if (backendResponse && backendResponse.data && Array.isArray(backendResponse.data)) {
-        propertiesData = backendResponse.data;
-      }
+      const propertiesData = Array.isArray(backendResponse)
+        ? backendResponse
+        : (isRecord(backendResponse) && Array.isArray(backendResponse.data))
+          ? backendResponse.data
+          : [];
 
       // Transform Property response to PlaceToStay format
-      const transformedResults: PlaceToStay[] = propertiesData.map((property: any) => {
+      const transformedResults: PlaceToStay[] = propertiesData.map((property) => {
+        const record = isRecord(property) ? property : {};
+
         // Convert sqmt to sqft (1 sqm = 10.764 sqft)
-        const sqft = property.sqmt ? Math.round(property.sqmt * 10.764) : 0;
+        const sqmtValue = toNumber(record.sqmt);
+        const sqft = sqmtValue ? Math.round(sqmtValue * 10.764) : 0;
 
         // Convert distance from meters to kilometers
-        const distanceInKm = property.distance ? property.distance / 1000 : undefined;
+        const distanceMeters = toNumber(record.distance, NaN);
+        const distanceInKm = Number.isFinite(distanceMeters) ? distanceMeters / 1000 : undefined;
 
         return {
-          id: String(property.id),
-          title: property.title || 'Untitled Property',
-          price: property.monthlyPrice,
-          address: property.address,
-          city: property.city || '',
-          latitude: property.latitude || 0,
-          longitude: property.longitude || 0,
-          bedrooms: property.bedrooms,
-          bathrooms: property.bathrooms,
+          id: String(record.id ?? ''),
+          title: toString(record.title, 'Untitled Property'),
+          price: toNumber(record.monthlyPrice),
+          address: toString(record.address),
+          city: toString(record.city),
+          latitude: toNumber(record.latitude),
+          longitude: toNumber(record.longitude),
+          bedrooms: toNumber(record.bedrooms),
+          bathrooms: toNumber(record.bathrooms),
           sqft: sqft,
-          type: property.type === 'room' ? 'apartment' : property.type, // Map 'room' to 'apartment' for now
+          type: record.type === 'room' ? 'apartment' : (record.type as PlaceToStay['type']),
           rating: 0, // Default to 0, will be populated when reviews are implemented
           reviewCount: 0, // Default to 0, will be populated when reviews are implemented
-          image: property.firstImageUrl || '',
-          featured: property.sharing,
+          image: toString(record.firstImageUrl),
+          featured: Boolean(record.sharing),
           distance: distanceInKm,
         };
       });
 
       // Filters disabled for now - use all transformed results
-      let filteredResults = transformedResults;
+      const filteredResults = [...transformedResults];
 
       // Sort by distance (closest first)
       filteredResults.sort((a, b) => {
@@ -112,7 +122,7 @@ export function usePlaceSearch() {
     }
   };
 
-  const useCurrentLocation = () => {
+  const requestCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -153,7 +163,7 @@ export function usePlaceSearch() {
     isSearching,
     hasSearched,
     executeSearch,
-    useCurrentLocation,
+    requestCurrentLocation,
     clearSearch
   };
 }

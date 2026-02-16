@@ -48,8 +48,9 @@ export function Login() {
       await requestOTP(mobile);
       setStep("otp");
       setInfo("OTP sent! Use 123456 for development.");
-    } catch (err: any) {
-      setError(err.message || "Failed to send OTP. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to send OTP. Please try again.";
+      setError(message);
     }
   };
 
@@ -66,8 +67,9 @@ export function Login() {
       await verifyOTP(mobile, otp);
       // Navigate to app after successful login
       navigate("/properties");
-    } catch (err: any) {
-      setError(err.message || "Invalid OTP. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Invalid OTP. Please try again.";
+      setError(message);
     }
   };
 

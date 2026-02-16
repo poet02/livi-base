@@ -3,13 +3,10 @@ import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Plus, X } from 'lucide-react';
 import { PropertyFormData } from './types';
-import { DraggableList, createDraggableItem } from '../DraggableList';
+import { DraggableList } from '../DraggableList';
+import { createDraggableItem, type DraggableItem } from '../DraggableList.utils';
 import { GridCamera } from './GridCamera';
 
-interface DraggableItem {
-  id: string;
-  content: React.ReactElement;
-}
 
 const Section = styled.div`
   margin-bottom: ${props => props.theme.spacing['2xl']};

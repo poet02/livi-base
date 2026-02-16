@@ -11,7 +11,6 @@ import { Media } from "./Pages/Media";
 import { CameraProvider } from "./context/CameraContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./Components/ProtectedRoute";
-import { TestPage } from "./Pages/TestPage";
 import { Registration } from "./Pages/Registration";
 
 // ----- Styled Components -----
@@ -66,7 +65,6 @@ function TabsLayout() {
         <Route path="/properties/add" element={<ProtectedRoute><AddProperty /></ProtectedRoute>} />
         <Route path="/properties/:id" element={<ProtectedRoute><Property /></ProtectedRoute>} />
         <Route path="/places" element={<ProtectedRoute><SearchPlaces /></ProtectedRoute>} />
-        <Route path="test-page" element={<TestPage />} />
       </Routes>
 
       {showBottomTabs && (

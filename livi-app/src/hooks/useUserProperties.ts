@@ -30,18 +30,22 @@ export const useUserProperties = (): UseUserPropertiesReturn => {
       // Backend returns: { data: properties, error: boolean }
       // API helper wraps it: { data: { data: properties, error }, success, status, message }
       // So response.data is the backend response, response.data.data is the properties array
-      const backendResponse = response.data as { data?: Property[]; error?: boolean };
+      const backendResponse = response.data as { data?: Property[]; error?: boolean } | Property[];
       const propertiesData = Array.isArray(backendResponse.data) 
         ? backendResponse.data 
-        : Array.isArray(backendResponse) 
-          ? backendResponse 
+        : Array.isArray(backendResponse)
+          ? backendResponse
           : [];
 
       // Transform properties to use firstImageUrl from backend as image
-      const propertiesWithImages = propertiesData.map((property: any) => ({
-        ...property,
-        image: property.firstImageUrl || '', // Use firstImageUrl from backend, fallback to empty string
-      }));
+      type PropertyWithImage = Property & { firstImageUrl?: string };
+      const propertiesWithImages = propertiesData.map((property) => {
+        const typedProperty = property as PropertyWithImage;
+        return {
+          ...typedProperty,
+          image: typedProperty.firstImageUrl || '',
+        };
+      });
 
       setProperties(propertiesWithImages);
     } catch (err) {

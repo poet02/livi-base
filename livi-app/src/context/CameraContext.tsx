@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 // context/CameraContext.tsx
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 

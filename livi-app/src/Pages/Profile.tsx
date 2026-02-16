@@ -1,24 +1,9 @@
-import { User, BarChart3, Calendar, FileText, Mail, Shield, HelpCircle, CreditCard, Database, Bell, Camera, Settings, Home } from "lucide-react";
+import { User, Mail, Database, Home, Camera } from "lucide-react";
 import TilesPage, { type TileItem } from "../Components/TileLayout";
-import { Page } from "./styles";
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
-import { createUser } from "../helpers/apis";
+import { useNavigate } from "react-router-dom";
 
 export function Profile() {
   const navigate = useNavigate();
-  // return <Page>Welcome to the Profile Page</Page>;
-  const makeTestApiCall = async () => {
-    try {
-      console.log('Making test API call to create user...');
-      const response = await createUser({
-        username: "testuser",
-        email: "sjwdnswjnd@kjnd.com"})
-      const data = await response.json();
-      console.log('API Response:', data);
-    } catch (error) {
-      console.error('API Error:', error);
-    }
-  }
   const tiles: TileItem[] = [
     {
       title: "Profile",
@@ -66,11 +51,11 @@ export function Profile() {
     //   description: "View storage usage and limits",
     //   size: 'small',
     // },
-     {
-      title: "Test Page",
+    {
+      title: "Storage",
       icon: <Database />,
-      onClick: () => navigate("/test-page"),
-      description: "test page for development",
+      onClick: () => navigate("/properties"),
+      description: "View storage usage and limits",
       size: 'small',
     },
     // {

@@ -1,4 +1,4 @@
-import { Page, PageContainer } from './styles'
+import { Page } from './styles'
 import { useState } from 'react'
 import MultiCitySelect from '../Components/MultiCitySelect/MultiCitySelect'
 import Chip from '../Components/Chip'

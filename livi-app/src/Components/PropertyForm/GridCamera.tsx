@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { Camera, X, Check, VideoOff, RotateCcw } from 'lucide-react';
 import { useCamera } from '../../context/CameraContext';
@@ -312,43 +312,9 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
   const [currentPreview, setCurrentPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const isDev = import.meta.env.DEV;
-
   const { setActiveStream, stopCamera: globalStopCamera } = useCamera();
 
-  // Initialize camera
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      startCamera();
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      cleanupCamera();
-    };
-  }, []);
-
-  // Restart video when returning from preview
-  useEffect(() => {
-    if (!currentPreview && stream && videoRef.current) {
-      const video = videoRef.current;
-      video.srcObject = stream;
-      video.play().catch(error => {
-        console.error('Failed to restart video after preview:', error);
-      });
-    }
-  }, [currentPreview, stream]);
-
-  // Clean up object URLs
-  useEffect(() => {
-    return () => {
-      if (currentPreview) {
-        URL.revokeObjectURL(currentPreview);
-      }
-    };
-  }, [currentPreview]);
-
-  const cleanupCamera = () => {
+  const cleanupCamera = useCallback(() => {
     if (stream) {
       stream.getTracks().forEach(track => {
         track.stop();
@@ -367,9 +333,9 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
     }
 
     setIsCameraActive(false);
-  };
+  }, [stream, globalStopCamera]);
 
-  const setupVideo = (mediaStream: MediaStream) => {
+  const setupVideo = useCallback((mediaStream: MediaStream) => {
     if (!videoRef.current) return false;
 
     const video = videoRef.current;
@@ -393,7 +359,7 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
         reject(new Error('Video error'));
       };
 
-      const timeout = setTimeout(() => {
+      setTimeout(() => {
         video.removeEventListener('canplay', onCanPlay);
         video.removeEventListener('error', onError);
         reject(new Error('Video setup timeout'));
@@ -402,9 +368,9 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
       video.addEventListener('canplay', onCanPlay);
       video.addEventListener('error', onError);
     });
-  };
+  }, [setActiveStream]);
 
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
       setIsLoading(true);
       setCameraError('');
@@ -431,12 +397,45 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
       setStream(mediaStream);
       await setupVideo(mediaStream);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error accessing camera:', error);
-      setCameraError(`Cannot access camera: ${error.message}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setCameraError(`Cannot access camera: ${message}`);
       setIsLoading(false);
     }
-  };
+  }, [facingMode, setupVideo, stream]);
+
+  // Initialize camera
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      startCamera();
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      cleanupCamera();
+    };
+  }, [startCamera, cleanupCamera]);
+
+  // Restart video when returning from preview
+  useEffect(() => {
+    if (!currentPreview && stream && videoRef.current) {
+      const video = videoRef.current;
+      video.srcObject = stream;
+      video.play().catch(error => {
+        console.error('Failed to restart video after preview:', error);
+      });
+    }
+  }, [currentPreview, stream]);
+
+  // Clean up object URLs
+  useEffect(() => {
+    return () => {
+      if (currentPreview) {
+        URL.revokeObjectURL(currentPreview);
+      }
+    };
+  }, [currentPreview]);
 
   const switchCamera = () => {
     const newMode = facingMode === 'user' ? 'environment' : 'user';

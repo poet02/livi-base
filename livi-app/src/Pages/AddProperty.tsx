@@ -267,7 +267,7 @@ export function AddProperty() {
     const fields = STEP_FIELDS[step];
     if (fields.length === 0) return true; // Steps without required fields are always valid
     
-    const result = await trigger(fields as any);
+    const result = await trigger(fields);
     return result;
   };
 
@@ -354,6 +354,9 @@ export function AddProperty() {
 
       let propertyId: number;
       
+      const isRecord = (value: unknown): value is Record<string, unknown> =>
+        typeof value === 'object' && value !== null;
+
       if (isEditMode && id) {
         // Update existing property
         const response = await api.patch(`/v1/properties/${id}`, payload);
@@ -368,10 +371,13 @@ export function AddProperty() {
         // Backend returns: { data: property, msg: string, error: boolean }
         // API helper wraps it: { data: { data: property, msg, error }, ... }
         // So response.data is the backend response, response.data.data is the property
-        const backendResponse = response.data;
-        const property = backendResponse.data || backendResponse;
-        propertyId = property?.id;
-        
+        const backendResponse = response.data as unknown;
+        const property = isRecord(backendResponse) && isRecord(backendResponse.data)
+          ? backendResponse.data
+          : backendResponse;
+        const propertyIdValue = isRecord(property) ? property.id : undefined;
+        propertyId = typeof propertyIdValue === 'number' ? propertyIdValue : Number(propertyIdValue);
+
         if (!propertyId) {
           throw new Error('Property ID not returned from server');
         }

@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 
 // Types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T;
   message?: string;
   status: number;
@@ -12,13 +12,13 @@ export interface ApiResponse<T = any> {
 export interface ApiError {
   message: string;
   status: number;
-  errors?: any[];
+  errors?: unknown[];
 }
 
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   headers?: Record<string, string>;
-  body?: any;
+  body?: unknown;
   timeout?: number;
   retries?: number;
 }
@@ -47,8 +47,23 @@ const getHeaders = (customHeaders?: Record<string, string>): HeadersInit => {
   return headers;
 };
 
+type ErrorPayload = {
+  message?: string;
+  errors?: unknown[];
+};
+
+const isErrorPayload = (value: unknown): value is ErrorPayload =>
+  typeof value === 'object' && value !== null;
+
+const getErrorMessage = (value: unknown, fallback: string): string => {
+  if (isErrorPayload(value) && typeof value.message === 'string') {
+    return value.message;
+  }
+  return fallback;
+};
+
 // Main API request function
-export const apiRequest = async <T = any>(
+export const apiRequest = async <T = unknown>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<ApiResponse<T>> => {
@@ -86,7 +101,7 @@ export const apiRequest = async <T = any>(
       const response = await fetch(url, config);
       clearTimeout(timeoutId);
 
-      let data;
+      let data: unknown;
       const contentType = response.headers.get('content-type');
       
       if (contentType && contentType.includes('application/json')) {
@@ -97,9 +112,9 @@ export const apiRequest = async <T = any>(
 
       if (!response.ok) {
         throw {
-          message: data.message || `HTTP error! status: ${response.status}`,
+          message: getErrorMessage(data, `HTTP error! status: ${response.status}`),
           status: response.status,
-          errors: data.errors,
+          errors: isErrorPayload(data) ? data.errors : undefined,
         } as ApiError;
       }
 
@@ -110,21 +125,30 @@ export const apiRequest = async <T = any>(
         success: response.status >= 200 && response.status < 300,
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       attempts++;
 
       if (attempts > retries) {
-        if (error.name === 'AbortError') {
+        const errorName = isRecord(error) && typeof (error as { name?: unknown }).name === 'string'
+          ? (error as { name: string }).name
+          : undefined;
+        if (errorName === 'AbortError') {
           throw {
             message: 'Request timeout',
             status: 408,
           } as ApiError;
         }
 
+        const fallbackMessage = 'Network error';
+        const message = getErrorMessage(error, fallbackMessage);
+        const status = isErrorPayload(error) && typeof (error as { status?: number }).status === 'number'
+          ? (error as { status: number }).status
+          : 0;
+        const errors = isErrorPayload(error) ? error.errors : undefined;
         throw {
-          message: error.message || 'Network error',
-          status: error.status || 0,
-          errors: error.errors,
+          message,
+          status,
+          errors,
         } as ApiError;
       }
 
@@ -141,27 +165,27 @@ export const apiRequest = async <T = any>(
 
 // Convenience methods
 export const api = {
-  get: <T = any>(endpoint: string, options?: Omit<RequestOptions, 'method' | 'body'>) =>
+  get: <T = unknown>(endpoint: string, options?: Omit<RequestOptions, 'method' | 'body'>) =>
     apiRequest<T>(endpoint, { ...options, method: 'GET' }),
 
-  post: <T = any>(endpoint: string, body?: any, options?: Omit<RequestOptions, 'method'>) =>
+  post: <T = unknown>(endpoint: string, body?: unknown, options?: Omit<RequestOptions, 'method'>) =>
     apiRequest<T>(endpoint, { ...options, method: 'POST', body }),
 
-  put: <T = any>(endpoint: string, body?: any, options?: Omit<RequestOptions, 'method'>) =>
+  put: <T = unknown>(endpoint: string, body?: unknown, options?: Omit<RequestOptions, 'method'>) =>
     apiRequest<T>(endpoint, { ...options, method: 'PUT', body }),
 
-  patch: <T = any>(endpoint: string, body?: any, options?: Omit<RequestOptions, 'method'>) =>
+  patch: <T = unknown>(endpoint: string, body?: unknown, options?: Omit<RequestOptions, 'method'>) =>
     apiRequest<T>(endpoint, { ...options, method: 'PATCH', body }),
 
-  delete: <T = any>(endpoint: string, options?: Omit<RequestOptions, 'method'>) =>
+  delete: <T = unknown>(endpoint: string, options?: Omit<RequestOptions, 'method'>) =>
     apiRequest<T>(endpoint, { ...options, method: 'DELETE' }),
 };
 
 // File upload helper
-export const uploadFile = async <T = any>(
+export const uploadFile = async <T = unknown>(
   endpoint: string,
   file: File,
-  additionalData: Record<string, any> = {},
+  additionalData: Record<string, string | Blob> = {},
   options?: Omit<RequestOptions, 'method' | 'body' | 'headers'>
 ): Promise<ApiResponse<T>> => {
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
@@ -187,13 +211,13 @@ export const uploadFile = async <T = any>(
     signal: AbortSignal.timeout(options?.timeout || 30000),
   });
 
-  const data = await response.json();
+  const data: unknown = await response.json();
 
   if (!response.ok) {
     throw {
-      message: data.message || `Upload failed with status: ${response.status}`,
+      message: getErrorMessage(data, `Upload failed with status: ${response.status}`),
       status: response.status,
-      errors: data.errors,
+      errors: isErrorPayload(data) ? data.errors : undefined,
     } as ApiError;
   }
 
@@ -206,7 +230,7 @@ export const uploadFile = async <T = any>(
 };
 
 // React hook for API calls with state management
-export const useApi = <T = any>() => {
+export const useApi = <T = unknown>() => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const [data, setData] = useState<T | null>(null);
