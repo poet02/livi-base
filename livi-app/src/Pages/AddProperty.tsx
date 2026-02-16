@@ -148,7 +148,7 @@ const ProgressBarContainer = styled.div`
   width: 100%;
 `;
 
-const ProgressBar = styled.div<{ progress: number }>`
+const ProgressBarFill = styled.div<{ progress: number }>`
   width: 100%;
   height: 8px;
   background: ${props => props.theme.colors.grey[200]};
@@ -674,7 +674,7 @@ export function AddProperty() {
                   </span>
                 </StatusStep>
                 <ProgressBarContainer>
-                  <ProgressBar progress={(uploadProgress.current / uploadProgress.total) * 100} />
+                  <ProgressBarFill progress={(uploadProgress.current / uploadProgress.total) * 100} />
                 </ProgressBarContainer>
               </>
             )}
