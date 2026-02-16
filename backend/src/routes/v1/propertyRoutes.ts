@@ -6,6 +6,7 @@ import {
   updatePropertyController,
   deletePropertyController,
   getUserPropertiesController,
+  searchPropertiesController,
 } from '../../controllers/property';
 import {
   getPresignedUrlsController,
@@ -17,6 +18,7 @@ import {
   updatePropertySchema,
   getPresignedUrlsSchema,
   confirmImagesSchema,
+  searchPropertiesSchema,
 } from '../../validation/property';
 
 const propertyRouter = Router();
@@ -30,6 +32,14 @@ propertyRouter.post(
 );
 
 propertyRouter.get('/', requireUser, getUserPropertiesController);
+
+// Search endpoint (authentication required)
+propertyRouter.get(
+  '/search',
+  requireUser,
+  validateRequest(searchPropertiesSchema, 'query'),
+  searchPropertiesController
+);
 
 propertyRouter.get('/:id', requireUser, getPropertyController);
 
@@ -202,6 +212,97 @@ export default propertyRouter;
  *     responses:
  *       "200":
  *         description: Presigned URLs generated successfully
+ */
+
+/**
+ * @swagger
+ * /v1/properties/search:
+ *   get:
+ *     summary: Search properties by location
+ *     description: Search for properties within a specified radius of a given latitude/longitude. Authentication required.
+ *     tags: [Properties]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: latitude
+ *         required: true
+ *         schema:
+ *           type: number
+ *           minimum: -90
+ *           maximum: 90
+ *         description: Latitude of the search center point
+ *       - in: query
+ *         name: longitude
+ *         required: true
+ *         schema:
+ *           type: number
+ *           minimum: -180
+ *           maximum: 180
+ *         description: Longitude of the search center point
+ *       - in: query
+ *         name: radius
+ *         required: false
+ *         schema:
+ *           type: number
+ *           minimum: 50
+ *           maximum: 50000
+ *           default: 200
+ *         description: Search radius in meters (default 200)
+ *     responses:
+ *       "200":
+ *         description: Properties found successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       title:
+ *                         type: string
+ *                       monthlyPrice:
+ *                         type: number
+ *                       currency:
+ *                         type: string
+ *                         enum: [ZAR, USD]
+ *                       address:
+ *                         type: string
+ *                       city:
+ *                         type: string
+ *                       state:
+ *                         type: string
+ *                       country:
+ *                         type: string
+ *                       latitude:
+ *                         type: number
+ *                       longitude:
+ *                         type: number
+ *                       bedrooms:
+ *                         type: integer
+ *                       bathrooms:
+ *                         type: integer
+ *                       sqmt:
+ *                         type: integer
+ *                       type:
+ *                         type: string
+ *                         enum: [room, apartment, house, condo]
+ *                       sharing:
+ *                         type: boolean
+ *                       firstImageUrl:
+ *                         type: string
+ *                       distance:
+ *                         type: number
+ *                         description: Distance in meters
+ *                 error:
+ *                   type: boolean
+ *       "400":
+ *         description: Invalid latitude, longitude, or radius
  */
 
 /**

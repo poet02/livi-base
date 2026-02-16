@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Input, LoginContainer } from "./styles";
 import { useAuth } from "../context/AuthContext";
@@ -27,13 +27,19 @@ const OTPInput = styled(Input)`
 
 export function Login() {
   const navigate = useNavigate();
-  const { requestOTP, verifyOTP, isLoading } = useAuth();
+  const { requestOTP, verifyOTP, isLoading, isAuthenticated } = useAuth();
   
   const [mobile, setMobile] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"mobile" | "otp">("mobile");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/properties");
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const handleRequestOTP = async () => {
     if (mobile.trim().length < 9) {
@@ -48,8 +54,9 @@ export function Login() {
       await requestOTP(mobile);
       setStep("otp");
       setInfo("OTP sent! Use 123456 for development.");
-    } catch (err: any) {
-      setError(err.message || "Failed to send OTP. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to send OTP. Please try again.";
+      setError(message);
     }
   };
 
@@ -66,8 +73,9 @@ export function Login() {
       await verifyOTP(mobile, otp);
       // Navigate to app after successful login
       navigate("/properties");
-    } catch (err: any) {
-      setError(err.message || "Invalid OTP. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Invalid OTP. Please try again.";
+      setError(message);
     }
   };
 
@@ -86,7 +94,7 @@ export function Login() {
 
   return (
     <LoginContainer>
-      <h2>Login</h2>
+      <h2>Login, Meh he</h2>
       
       {step === "mobile" ? (
         <>

@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react'
-import { Input, SearchAdress } from '../../Pages/styles'
+import { useMemo, useState, useRef, useEffect } from 'react'
+import { Input } from '../../Pages/styles'
 
 const CITY_OPTIONS = [
   'New York',

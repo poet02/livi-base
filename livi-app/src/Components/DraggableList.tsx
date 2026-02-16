@@ -2,8 +2,6 @@ import React from 'react';
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -22,6 +20,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import styled from 'styled-components';
 import { GripVertical, MoreVertical } from 'lucide-react';
+import type { DraggableItem } from './DraggableList.utils';
 
 // Styled Components
 const Container = styled.div`
@@ -133,12 +132,6 @@ const ItemIndex = styled.div`
   font-weight: 600;
   z-index: 5;
 `;
-
-// Types (keep the same)
-interface DraggableItem {
-  id: string;
-  content: React.ReactElement;
-}
 
 interface DraggableListProps {
   items: DraggableItem[];
@@ -334,43 +327,4 @@ export const DraggableList: React.FC<DraggableListProps> = ({
   );
 };
 
-// Utility function to create draggable items
-export const createDraggableItem = (
-  id: string,
-  content: React.ReactElement
-): DraggableItem => ({
-  id,
-  content,
-});
-
-// Hook for using draggable list state
-export const useDraggableList = (initialItems: DraggableItem[] = []) => {
-  const [items, setItems] = React.useState<DraggableItem[]>(initialItems);
-
-  const addItem = (id: string, content: React.ReactElement) => {
-    setItems(prev => [...prev, createDraggableItem(id, content)]);
-  };
-
-  const removeItem = (id: string) => {
-    setItems(prev => prev.filter(item => item.id !== id));
-  };
-
-  const updateItem = (id: string, content: React.ReactElement) => {
-    setItems(prev => prev.map(item => 
-      item.id === id ? { ...item, content } : item
-    ));
-  };
-
-  const reorderItems = (newItems: DraggableItem[]) => {
-    setItems(newItems);
-  };
-
-  return {
-    items,
-    setItems,
-    addItem,
-    removeItem,
-    updateItem,
-    reorderItems,
-  };
-};
+// keep exports limited to components to satisfy react-refresh

@@ -1,5 +1,13 @@
 require('dotenv').config();
 
+// SSL configuration for RDS
+const sslConfig = process.env.DB_HOST && process.env.DB_HOST.includes('rds.amazonaws.com') 
+  ? {
+      require: true,
+      rejectUnauthorized: false
+    }
+  : false;
+
 module.exports = {
   development: {
     username: process.env.DB_USER,
@@ -8,6 +16,9 @@ module.exports = {
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT, 10) || 5432,
     dialect: process.env.DB_TYPE || 'postgres',
+    dialectOptions: {
+      ssl: sslConfig
+    },
   },
   test: {
     username: process.env.DB_USER,
@@ -16,6 +27,9 @@ module.exports = {
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT, 10) || 5432,
     dialect: process.env.DB_TYPE || 'postgres',
+    dialectOptions: {
+      ssl: sslConfig
+    },
   },
   production: {
     username: process.env.DB_USER,
@@ -24,5 +38,8 @@ module.exports = {
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT, 10) || 5432,
     dialect: process.env.DB_TYPE || 'postgres',
+    dialectOptions: {
+      ssl: sslConfig
+    },
   },
 };

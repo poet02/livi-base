@@ -73,3 +73,9 @@ export const getPresignedUrlsSchema = Joi.object({
   count: Joi.number().integer().min(1).max(20).required(),
 });
 
+export const searchPropertiesSchema = Joi.object({
+  latitude: Joi.number().min(-90).max(90).required(),
+  longitude: Joi.number().min(-180).max(180).required(),
+  radius: Joi.number().min(50).max(50000).optional().default(200),
+});
+

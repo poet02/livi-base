@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authService, User, AuthResponse } from '../services/authService';
 
@@ -22,14 +23,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Initialize auth state on mount
   useEffect(() => {
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       try {
         const token = authService.getToken();
-        const userData = authService.getUser();
-        
-        if (token && userData) {
-          setUser(userData);
+        if (!token) {
+          return;
         }
+
+        const userData = await authService.validateSession();
+        setUser(userData);
       } catch (error) {
         console.error('Error initializing auth:', error);
         authService.logout();
@@ -45,8 +47,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(true);
     try {
       await authService.requestOTP(mobile);
-    } catch (error) {
-      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -58,8 +58,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response = await authService.verifyOTP(mobile, otp);
       setUser(response.user);
       return response;
-    } catch (error) {
-      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +70,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value: AuthContextType = {
     user,
-    isAuthenticated: !!user && authService.isAuthenticated(),
+    isAuthenticated: authService.isAuthenticated(),
     isLoading,
     requestOTP,
     verifyOTP,

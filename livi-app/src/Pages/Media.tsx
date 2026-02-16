@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { Camera, X, RotateCcw, Check, ArrowLeft, VideoOff, ChevronUp, ChevronDown } from 'lucide-react';
@@ -69,12 +69,12 @@ const CameraContainer = styled.div`
   background: #000;
 `;
 
-const VideoElement = styled.video`
+const VideoElement = styled.video<{ $show: boolean; $mirror: boolean }>`
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: ${props => props.show ? 'block' : 'none'};
-  transform: ${props => props.mirror ? 'scaleX(-1)' : 'scaleX(1)'};
+  display: ${props => props.$show ? 'block' : 'none'};
+  transform: ${props => props.$mirror ? 'scaleX(-1)' : 'scaleX(1)'};
 `;
 
 const Canvas = styled.canvas`
@@ -101,9 +101,9 @@ const Viewfinder = styled.div`
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
 `;
 
-const Controls = styled.div`
+const Controls = styled.div<{ $hasImages: boolean }>`
   position: absolute;
-  bottom: ${props => props.hasImages ? '100px' : '2rem'}; /* Move up when gallery is present */
+  bottom: ${props => props.$hasImages ? '100px' : '2rem'}; /* Move up when gallery is present */
   left: 0;
   right: 0;
   display: flex;
@@ -335,14 +335,6 @@ const GalleryImage = styled.img`
   display: block;
 `;
 
-const EmptyGallery = styled.div`
-  text-align: center;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.875rem;
-  padding: 2rem;
-  width: 100%;
-`;
-
 const ErrorMessage = styled.div`
   position: absolute;
   top: 50%;
@@ -409,51 +401,14 @@ export function Media() {
   const [debugInfo, setDebugInfo] = useState<string>('Initializing...');
   const [videoReady, setVideoReady] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const restartGuardRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Get callback from navigation state
   const onImagesCapture = location.state?.onImagesCapture;
-  const initialImages = location.state?.initialImages || [];
 
   const { setActiveStream, stopCamera: globalStopCamera } = useCamera();
 
-  // Initialize camera after component mounts and refs are available
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      startCamera();
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      cleanupCamera();
-    };
-  }, []);
-
-  // Restart video when returning from preview
-  useEffect(() => {
-    if (!currentPreview && stream && videoRef.current) {
-      const video = videoRef.current;
-      video.srcObject = stream;
-      video.play().catch(error => {
-        console.error('Failed to restart video after preview:', error);
-        setDebugInfo(`Failed to restart video: ${error.message}`);
-      });
-    }
-  }, [currentPreview, stream]);
-
-  // Clean up ALL object URLs when component unmounts
-  useEffect(() => {
-    return () => {
-      console.log('Cleaning up all object URLs');
-      imagePreviews.forEach(url => {
-        URL.revokeObjectURL(url);
-      });
-      if (currentPreview) {
-        URL.revokeObjectURL(currentPreview);
-      }
-    };
-  }, []);
-
-  const cleanupCamera = () => {
+  const cleanupCamera = useCallback(() => {
     console.log('Cleaning up camera...');
 
     if (stream) {
@@ -478,9 +433,9 @@ export function Media() {
     setIsCameraActive(false);
     setVideoReady(false);
     console.log('Camera cleanup completed');
-  };
+  }, [stream, globalStopCamera]);
 
-  const setupVideo = (mediaStream: MediaStream) => {
+  const setupVideo = useCallback((mediaStream: MediaStream) => {
     if (!videoRef.current) {
       setDebugInfo('Video ref is not available yet');
       return false;
@@ -505,9 +460,10 @@ export function Media() {
           .catch(reject);
       };
 
-      const onError = (error: any) => {
+      const onError = (error: unknown) => {
         video.removeEventListener('canplay', onCanPlay);
-        reject(new Error(`Video error: ${error}`));
+        const message = error instanceof Error ? error.message : 'Unknown video error';
+        reject(new Error(`Video error: ${message}`));
       };
 
       const timeout = setTimeout(() => {
@@ -522,9 +478,9 @@ export function Media() {
         clearTimeout(timeout);
       });
     });
-  };
+  }, [setActiveStream]);
 
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
       setIsLoading(true);
       setCameraError('');
@@ -557,13 +513,71 @@ export function Media() {
 
       await setupVideo(mediaStream);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error accessing camera:', error);
-      setDebugInfo(`Camera error: ${error.message}`);
-      setCameraError(`Cannot access camera: ${error.message}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setDebugInfo(`Camera error: ${message}`);
+      setCameraError(`Cannot access camera: ${message}`);
       setIsLoading(false);
     }
-  };
+  }, [facingMode, setupVideo, stream]);
+
+  // Initialize camera after component mounts and refs are available
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      startCamera();
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      cleanupCamera();
+    };
+  }, [startCamera, cleanupCamera]);
+
+  // Restart video when returning from preview
+  useEffect(() => {
+    if (!currentPreview && stream && videoRef.current) {
+      const video = videoRef.current;
+      if (video.srcObject !== stream) {
+        video.srcObject = stream;
+        return;
+      }
+      if (restartGuardRef.current) {
+        clearTimeout(restartGuardRef.current);
+      }
+      restartGuardRef.current = setTimeout(() => {
+        if (!video.paused || currentPreview) return;
+        const playPromise = video.play();
+        if (playPromise) {
+          playPromise.catch((error: unknown) => {
+            if (error instanceof Error && error.name === 'AbortError') {
+              return;
+            }
+            console.error('Failed to restart video after preview:', error);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            setDebugInfo(`Failed to restart video: ${message}`);
+          });
+        }
+      }, 150);
+    }
+  }, [currentPreview, stream]);
+
+  // Clean up ALL object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      console.log('Cleaning up all object URLs');
+      if (restartGuardRef.current) {
+        clearTimeout(restartGuardRef.current);
+        restartGuardRef.current = null;
+      }
+      imagePreviews.forEach(url => {
+        URL.revokeObjectURL(url);
+      });
+      if (currentPreview) {
+        URL.revokeObjectURL(currentPreview);
+      }
+    };
+  }, [currentPreview, imagePreviews]);
 
   const switchCamera = () => {
     const newMode = facingMode === 'user' ? 'environment' : 'user';
@@ -770,14 +784,14 @@ export function Media() {
         )}
 
         {/* Video element */}
-        <VideoElement
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          show={isCameraActive && !currentPreview}
-          mirror={facingMode === 'user'}
-        />
+          <VideoElement
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            $show={isCameraActive && !currentPreview}
+            $mirror={facingMode === 'user'}
+          />
 
         {isCameraActive && !cameraError && !currentPreview && (
           <>
@@ -786,7 +800,7 @@ export function Media() {
             </CameraOverlay>
 
             {/* Fixed: Controls now adjust position based on whether images exist */}
-            <Controls hasImages={capturedImages.length > 0}>
+            <Controls $hasImages={capturedImages.length > 0}>
               <ControlButton onClick={switchCamera}>
                 <RotateCcw />
               </ControlButton>

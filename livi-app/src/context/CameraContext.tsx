@@ -1,5 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 // context/CameraContext.tsx
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 
 interface CameraContextType {
   activeStream: MediaStream | null;
@@ -13,21 +14,23 @@ const CameraContext = createContext<CameraContextType | undefined>(undefined);
 export function CameraProvider({ children }: { children: React.ReactNode }) {
   const [activeStream, setActiveStream] = useState<MediaStream | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const stopCamera = useCallback(() => {
-    console.log('Stopping camera from context...');
-    if (activeStream) {
-      activeStream.getTracks().forEach(track => {
-        console.log(`Stopping track: ${track.kind}`);
+    const stream = streamRef.current;
+    if (stream) {
+      stream.getTracks().forEach(track => {
         track.stop();
         track.enabled = false;
       });
     }
+    streamRef.current = null;
     setActiveStream(null);
     setIsCameraActive(false);
-  }, [activeStream]);
+  }, []);
 
   const setStream = useCallback((stream: MediaStream | null) => {
+    streamRef.current = stream;
     setActiveStream(stream);
     setIsCameraActive(!!stream);
   }, []);
@@ -35,11 +38,15 @@ export function CameraProvider({ children }: { children: React.ReactNode }) {
   // Auto-stop camera when component unmounts (safety)
   useEffect(() => {
     return () => {
-      if (activeStream) {
-        stopCamera();
+      const stream = streamRef.current;
+      if (stream) {
+        stream.getTracks().forEach(track => {
+          track.stop();
+          track.enabled = false;
+        });
       }
     };
-  }, [activeStream, stopCamera]);
+  }, []);
 
   const value = {
     activeStream,

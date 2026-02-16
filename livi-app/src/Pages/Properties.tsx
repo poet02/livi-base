@@ -2,6 +2,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useUserProperties } from '../hooks/useUserProperties';
+import type { Property } from '../hooks/usePropertySearch';
 import { PropertyCard } from '../Components/PropertyCard';
 import { HousePlus, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -100,7 +101,7 @@ export const Properties: React.FC = () => {
   const navigate = useNavigate();
   const { properties, loading } = useUserProperties();
 
-  const handlePropertyClick = (property: any) => {
+  const handlePropertyClick = (property: Property) => {
     navigate(`/properties/${property.id}`);
   };
 

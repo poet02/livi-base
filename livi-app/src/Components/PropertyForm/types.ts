@@ -33,9 +33,8 @@ export interface MapboxFeature {
   type: string;
   place_type: string[];
   relevance: number;
-  properties: {
+  properties: Record<string, unknown> & {
     accuracy?: string;
-    [key: string]: any;
   };
   text: string;
   place_name: string;
@@ -44,11 +43,10 @@ export interface MapboxFeature {
     type: string;
     coordinates: [number, number];
   };
-  context?: Array<{
+  context?: Array<Record<string, unknown> & {
     id: string;
     text: string;
     short_code?: string;
-    [key: string]: any;
   }>;
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import styled from 'styled-components';
@@ -203,7 +203,7 @@ export function AddProperty() {
   const [imageLocations, setImageLocations] = useState<Map<string, { latitude: number; longitude: number }>>(new Map());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [shouldSubmit, setShouldSubmit] = useState(false);
+  const shouldSubmitRef = useRef(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -267,7 +267,7 @@ export function AddProperty() {
     const fields = STEP_FIELDS[step];
     if (fields.length === 0) return true; // Steps without required fields are always valid
     
-    const result = await trigger(fields as any);
+    const result = await trigger(fields);
     return result;
   };
 
@@ -314,13 +314,13 @@ export function AddProperty() {
   // Handle form submission
   const onSubmit = async (data: PropertyFormData) => {
     // Only submit if the submit button was explicitly clicked
-    if (!shouldSubmit) {
+    if (!shouldSubmitRef.current) {
       return;
     }
     
     console.log('Property data to submit:', data);
     setIsSubmitting(true);
-    setShouldSubmit(false); // Reset flag
+    shouldSubmitRef.current = false; // Reset flag
 
     try {
       // Prepare payload for backend (exclude images, amenities, and map featured to sharing)
@@ -354,6 +354,9 @@ export function AddProperty() {
 
       let propertyId: number;
       
+      const isRecord = (value: unknown): value is Record<string, unknown> =>
+        typeof value === 'object' && value !== null;
+
       if (isEditMode && id) {
         // Update existing property
         const response = await api.patch(`/v1/properties/${id}`, payload);
@@ -368,10 +371,13 @@ export function AddProperty() {
         // Backend returns: { data: property, msg: string, error: boolean }
         // API helper wraps it: { data: { data: property, msg, error }, ... }
         // So response.data is the backend response, response.data.data is the property
-        const backendResponse = response.data;
-        const property = backendResponse.data || backendResponse;
-        propertyId = property?.id;
-        
+        const backendResponse = response.data as unknown;
+        const property = isRecord(backendResponse) && isRecord(backendResponse.data)
+          ? backendResponse.data
+          : backendResponse;
+        const propertyIdValue = isRecord(property) ? property.id : undefined;
+        propertyId = typeof propertyIdValue === 'number' ? propertyIdValue : Number(propertyIdValue);
+
         if (!propertyId) {
           throw new Error('Property ID not returned from server');
         }
@@ -620,7 +626,7 @@ export function AddProperty() {
           onSubmit={(e) => {
             e.preventDefault();
             // Only proceed if submit button was explicitly clicked
-            if (shouldSubmit) {
+            if (shouldSubmitRef.current) {
               handleSubmit(onSubmit)(e);
             }
           }}
@@ -665,7 +671,7 @@ export function AddProperty() {
               disabled={isSubmitting || !isValid}
               onClick={(e) => {
                 e.preventDefault();
-                setShouldSubmit(true);
+                shouldSubmitRef.current = true;
                 handleSubmit(onSubmit)(e);
               }}
             >

@@ -1,21 +1,12 @@
-import { api, handleApiError } from './apiHelper';
+import { api, handleApiError, type ApiError } from './apiHelper';
 
-// GET request
-const fetchUsers = async () => {
-  try {
-    const response = await api.get('/users');
-    return response.data;
-  } catch (error: any) {
-    handleApiError(error);
-  }
-};
+type CreateUserPayload = Record<string, unknown>;
 
-// POST request
-export const createUser = async (userData: any) => {
+export const createUser = async (userData: CreateUserPayload) => {
   try {
     const response = await api.post('/v1/auth/register', userData);
     return response.data;
-  } catch (error: any) {
-    handleApiError(error);
+  } catch (error: unknown) {
+    handleApiError(error as ApiError);
   }
 };

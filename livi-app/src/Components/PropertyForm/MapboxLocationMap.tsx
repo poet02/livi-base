@@ -116,7 +116,7 @@ export function MapboxLocationMap({
         markerRef.current.remove();
       }
     };
-  }, [latitude, longitude, accessToken, address]);
+  }, [latitude, longitude, accessToken, address, onMarkerDrag]);
 
   // Cleanup map on unmount
   useEffect(() => {

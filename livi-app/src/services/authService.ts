@@ -1,11 +1,11 @@
-import { api, handleApiError, ApiError } from '../helpers/apiHelper';
+import { api, handleApiError, type ApiError } from '../helpers/apiHelper';
 
 export interface User {
   id: number;
   mobile: string;
   name?: string;
   surname?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface AuthResponse {
@@ -22,16 +22,38 @@ const USER_KEY = 'userData';
  */
 class AuthService {
   /**
+   * Validate current session token against backend
+   */
+  async validateSession(): Promise<User> {
+    const response = await api.get<{ data: User; error: boolean }>('/v1/user');
+
+    if (!response.success) {
+      throw new Error(response.message || 'Session validation failed');
+    }
+
+    const backendResponse = response.data as unknown;
+    const user = typeof backendResponse === 'object' && backendResponse !== null && 'data' in backendResponse
+      ? (backendResponse as { data: User }).data
+      : (backendResponse as User);
+
+    if (!user || typeof user.id !== 'number') {
+      throw new Error('Invalid user data from session validation');
+    }
+
+    this.setUser(user);
+    return user;
+  }
+  /**
    * Request OTP for a mobile number
    */
   async requestOTP(mobile: string): Promise<void> {
     try {
-      const response = await api.post('/v1/auth/request-otp', { mobile });
+      const response = await api.post('/v1/auth/request-otp', { mobile }, { includeAuth: false });
       
       if (!response.success) {
         throw new Error(response.message || 'Failed to request OTP');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       const apiError = error as ApiError;
       handleApiError(apiError);
       throw error;
@@ -48,7 +70,7 @@ class AuthService {
         access_token: string;
         user: User;
         data: User;
-      }>('/v1/auth/verify-otp', { mobile, otp });
+      }>('/v1/auth/verify-otp', { mobile, otp }, { includeAuth: false });
 
       if (!response.success || !response.data.access_token) {
         throw new Error(response.message || 'Failed to verify OTP');
@@ -67,7 +89,7 @@ class AuthService {
         token,
         user: user || { id: 0, mobile },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       const apiError = error as ApiError;
       handleApiError(apiError);
       throw error;

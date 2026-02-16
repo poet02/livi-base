@@ -38,8 +38,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // CORS configuration
+const frontendUrls = (process.env.FRONTEND_URLS || '')
+  .split(',')
+  .map(url => url.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:7000'], // Add your frontend URLs
+  origin: frontendUrls.length > 0
+    ? frontendUrls
+    : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:7000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
