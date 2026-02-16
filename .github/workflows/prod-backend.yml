@@ -83,6 +83,7 @@ jobs:
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Download task definition
+        working-directory: ./backend
         run: |
           # Get the task definition from the service
           TASK_DEF=$(aws ecs describe-services \
@@ -91,13 +92,24 @@ jobs:
             --query 'services[0].taskDefinition' \
             --output text)
           
+          echo "Task definition ARN: $TASK_DEF"
+          
           # Download the task definition
           aws ecs describe-task-definition \
             --task-definition $TASK_DEF \
             --query taskDefinition > task-definition.json
+          
+          # Verify file was created
+          if [ ! -f task-definition.json ]; then
+            echo "Error: task-definition.json was not created"
+            exit 1
+          fi
+          
+          echo "Task definition downloaded successfully"
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
+        working-directory: ./backend
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
