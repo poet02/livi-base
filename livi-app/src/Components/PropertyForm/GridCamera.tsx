@@ -73,37 +73,17 @@ const CameraContainer = styled.div`
 `;
 
 const VideoElement = styled.video.withConfig({
-  shouldForwardProp: (prop) => !['show', 'mirror'].includes(prop),
-})<{ show: boolean; mirror: boolean }>`
+  shouldForwardProp: (prop) => !['show'].includes(prop),
+})<{ show: boolean }>`
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: ${props => props.show ? 'block' : 'none'};
-  transform: ${props => props.mirror ? 'scaleX(-1)' : 'scaleX(1)'};
+  transform: scaleX(-1); /* Mirror effect like a real mirror */
 `;
 
 const Canvas = styled.canvas`
   display: none;
-`;
-
-const CameraOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const Viewfinder = styled.div`
-  width: 300px;
-  height: 300px;
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
 `;
 
 const Controls = styled.div`
@@ -705,15 +685,10 @@ export function GridCamera({ onCapture, onClose }: GridCameraProps) {
           playsInline
           muted
           show={isCameraActive && !currentPreview}
-          mirror={facingMode === 'user'}
         />
 
         {isCameraActive && !cameraError && !currentPreview && (
           <>
-            <CameraOverlay>
-              <Viewfinder />
-            </CameraOverlay>
-
             <Controls>
               <ControlButton onClick={switchCamera}>
                 <RotateCcw />
