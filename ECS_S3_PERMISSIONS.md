@@ -225,6 +225,72 @@ If you get a CORS error when uploading images from the frontend, you need to con
 
 After saving, the CORS error should be resolved and image uploads should work.
 
+### Critical: Region Mismatch Issue
+
+**Your bucket is in `eu-west-1` but your task definition has `AWS_REGION` set to `us-west-1`.**
+
+This mismatch causes presigned URLs to be generated with the wrong region, which will cause CORS errors and upload failures.
+
+**Fix: Update ECS Task Definition Region**
+
+1. **Go to ECS → Task Definitions → `livi-dev-backend` → Create new revision**
+
+2. **Find the `AWS_REGION` environment variable and change it:**
+   - Current: `us-west-1` ❌
+   - Should be: `eu-west-1` ✅
+
+3. **Create the new revision**
+
+4. **Update your service:**
+   - Go to ECS → Clusters → `livi-dev-cluster-1` → Services → `livi-dev-backend-service`
+   - Click "Update"
+   - Select the new task definition revision
+   - Click "Update" to deploy
+
+5. **Wait for deployment to complete** (usually 1-2 minutes)
+
+6. **Test again** - The presigned URLs should now use `eu-west-1` and CORS should work
+
+**Note:** After this change, presigned URLs will show `eu-west-1` in the URL instead of `us-west-1`.
+
+### Still Getting CORS Errors with Wildcard Config?
+
+If you're still getting CORS errors even with `"AllowedOrigins": ["*"]`, try these steps:
+
+1. **Verify CORS config was saved:**
+   - Go to S3 → Bucket → Permissions → CORS
+   - Make sure the config shows `"AllowedOrigins": ["*"]`
+   - If it doesn't match, re-save it
+
+2. **Check bucket region:**
+   - The presigned URL shows `us-west-1` region
+   - Verify your bucket is actually in `us-west-1`
+   - Make sure `AWS_REGION` in your ECS task definition is set to `us-west-1` (not `us-east-1`)
+
+3. **Check bucket policy:**
+   - Go to S3 → Bucket → Permissions → Bucket policy
+   - Make sure there's no policy blocking requests
+   - If there's a policy, it should allow the operations
+
+4. **Wait longer:**
+   - CORS changes can take up to 5 minutes to fully propagate
+   - Try again after waiting
+
+5. **Test with curl to verify CORS headers:**
+   ```bash
+   curl -X OPTIONS "https://devtest-property-images.s3.us-west-1.amazonaws.com/properties/13/images/test.jpg" \
+     -H "Origin: https://d2sssuh2b33ngx.cloudfront.net" \
+     -H "Access-Control-Request-Method: PUT" \
+     -v
+   ```
+   - Look for `Access-Control-Allow-Origin` in the response headers
+   - If it's missing, the CORS config isn't working
+
+6. **Try a different browser/incognito:**
+   - Clear all browser cache
+   - Try in incognito/private mode
+   - CORS responses can be cached by browsers
+
 ### Troubleshooting CORS Issues
 
 If you're still getting CORS errors after configuring CORS:
