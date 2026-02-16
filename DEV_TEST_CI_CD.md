@@ -218,6 +218,27 @@ If both backend and frontend change in the same push:
 - Check `ECR_REPOSITORY_URI` secret (should be just repo name, not full URL)
 - Verify AWS credentials have ECR permissions
 
+**If you see `403 Forbidden` when building:**
+- This happens when Docker BuildKit tries to check ECR for layer caching
+- The workflow currently disables BuildKit (`DOCKER_BUILDKIT=0`) to avoid this
+- **To fix properly:** Add these IAM permissions to your CI/CD user:
+  ```json
+  {
+    "Effect": "Allow",
+    "Action": [
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:BatchGetImage",
+      "ecr:PutImage",
+      "ecr:InitiateLayerUpload",
+      "ecr:UploadLayerPart",
+      "ecr:CompleteLayerUpload"
+    ],
+    "Resource": "*"
+  }
+  ```
+
 ### ECS Update Fails
 
 - Check task definition exists
