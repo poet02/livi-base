@@ -76,16 +76,11 @@ jobs:
         run: |
           # Build the image
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
           
-          # Push unique tag (may fail if tag exists, but that's ok - we'll still update latest)
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG || echo "Tag already exists, continuing..."
-          
-          # Always push latest (this is what ECS uses)
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          # Push unique tag (will fail if tag exists due to immutability, but that's rare with timestamp)
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-          echo "image-latest=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_OUTPUT
 
       - name: Download task definition
         run: |
@@ -99,7 +94,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: livi-backend
-          image: ${{ steps.build-image.outputs.image-latest }}
+          image: ${{ steps.build-image.outputs.image }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
@@ -113,7 +108,7 @@ jobs:
         run: |
           echo "## ✅ Prod Backend Deployed Successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** \`${{ steps.build-image.outputs.image-latest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ steps.build-image.outputs.image }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Service:** \`${{ secrets.ECS_SERVICE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Cluster:** \`${{ secrets.ECS_CLUSTER_NAME }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
