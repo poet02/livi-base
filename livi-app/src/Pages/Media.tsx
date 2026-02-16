@@ -537,12 +537,20 @@ export function Media() {
   useEffect(() => {
     if (!currentPreview && stream && videoRef.current) {
       const video = videoRef.current;
-      video.srcObject = stream;
-      video.play().catch(error => {
-        console.error('Failed to restart video after preview:', error);
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        setDebugInfo(`Failed to restart video: ${message}`);
-      });
+      if (video.srcObject !== stream) {
+        video.srcObject = stream;
+      }
+      const playPromise = video.play();
+      if (playPromise) {
+        playPromise.catch((error: unknown) => {
+          if (error instanceof Error && error.name === 'AbortError') {
+            return;
+          }
+          console.error('Failed to restart video after preview:', error);
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          setDebugInfo(`Failed to restart video: ${message}`);
+        });
+      }
     }
   }, [currentPreview, stream]);
 
