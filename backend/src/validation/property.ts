@@ -17,7 +17,7 @@ export const createPropertySchema = Joi.object({
   latitude: Joi.number().min(-90).max(90).optional().allow(null),
   longitude: Joi.number().min(-180).max(180).optional().allow(null),
   bedrooms: Joi.number().integer().min(0).required(),
-  bathrooms: Joi.number().integer().min(0).required(),
+  bathrooms: Joi.number().min(0).optional().allow(null), // Allow decimals (0, 0.5, 1, 1.5, etc.) - optional
   sqmt: Joi.number().integer().positive().optional().allow(null),
   type: Joi.string().valid('room', 'apartment', 'house', 'condo').required(),
   parking: Joi.number().integer().min(0).optional().allow(null),
@@ -44,7 +44,7 @@ export const updatePropertySchema = Joi.object({
   latitude: Joi.number().min(-90).max(90).optional().allow(null),
   longitude: Joi.number().min(-180).max(180).optional().allow(null),
   bedrooms: Joi.number().integer().min(0).optional(),
-  bathrooms: Joi.number().integer().min(0).optional(),
+  bathrooms: Joi.number().min(0).optional(), // Allow decimals (0, 0.5, 1, 1.5, etc.)
   sqmt: Joi.number().integer().positive().optional().allow(null),
   type: Joi.string().valid('room', 'apartment', 'house', 'condo').optional(),
   parking: Joi.number().integer().min(0).optional().allow(null),

@@ -115,8 +115,8 @@ Property.init(
       allowNull: false,
     },
     bathrooms: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
+      type: DataTypes.DECIMAL(3, 1), // Allow decimals like 0, 0.5, 1, 1.5, etc. (max 999.9)
+      allowNull: true, // Bathrooms is optional
     },
     sqmt: {
       type: DataTypes.INTEGER,

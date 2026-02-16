@@ -88,12 +88,11 @@ export function PropertyDetailsStep({ register, errors, watch, setValue }: Prope
 
         <FormGroup>
           <Label>
-            Bathrooms <RequiredStar>*</RequiredStar>
+            Bathrooms
           </Label>
           <Input
             type="number"
             {...register('bathrooms', {
-              required: 'Bathrooms is required',
               min: { value: 0, message: 'Bathrooms cannot be negative' }
             })}
             placeholder="2"

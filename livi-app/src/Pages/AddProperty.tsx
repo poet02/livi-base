@@ -224,7 +224,7 @@ const STEP_FIELDS: Record<number, (keyof PropertyFormData)[]> = {
   1: ['address', 'city', 'state', 'country'], // Location
   2: [], // Property Images (optional)
   3: ['type', 'monthlyPrice', 'currency'], // Basic Information
-  4: ['bedrooms', 'bathrooms', 'sqmt'], // Property Details
+  4: ['bedrooms', 'sqmt'], // Property Details (bathrooms is optional)
   5: [], // Review (no validation needed)
 };
 
