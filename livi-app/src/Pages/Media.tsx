@@ -765,13 +765,13 @@ export function Media() {
         )}
 
         {/* Video element */}
-          <VideoElement
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
+        <VideoElement
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
             $show={isCameraActive && !currentPreview}
-          />
+        />
 
         {isCameraActive && !cameraError && !currentPreview && (
           <>

@@ -57,7 +57,7 @@ export function usePlaceSearch() {
       // API helper wraps response: { data: { data: [...], error }, success, status, message }
       // So response.data is the backend response object
       const backendResponse = response.data as unknown;
-
+      
       // Handle different response structures
       const propertiesData = Array.isArray(backendResponse)
         ? backendResponse

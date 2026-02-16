@@ -31,7 +31,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         const userData = await authService.validateSession();
-        setUser(userData);
+          setUser(userData);
       } catch (error) {
         console.error('Error initializing auth:', error);
         authService.logout();

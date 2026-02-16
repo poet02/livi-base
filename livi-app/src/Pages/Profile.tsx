@@ -51,7 +51,7 @@ export function Profile() {
     //   description: "View storage usage and limits",
     //   size: 'small',
     // },
-    {
+     {
       title: "Storage",
       icon: <Database />,
       onClick: () => navigate("/properties"),

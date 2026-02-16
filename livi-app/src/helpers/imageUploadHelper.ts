@@ -32,16 +32,21 @@ export const uploadImageToS3 = async (
   presignedUrl: string
 ): Promise<void> => {
   try {
+    // Note: Content-Type must match what was used to sign the presigned URL
+    // The presigned URL is signed with Content-Type: image/jpeg
     const response = await fetch(presignedUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': 'image/jpeg',
       },
       body: file,
+      // Don't include credentials for S3 uploads (presigned URLs handle auth)
+      credentials: 'omit',
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to upload image to S3: ${response.status} ${response.statusText}`);
+      const errorText = await response.text().catch(() => 'Unknown error');
+      throw new Error(`Failed to upload image to S3: ${response.status} ${response.statusText} - ${errorText}`);
     }
   } catch (error) {
     if (error instanceof Error) {
