@@ -479,7 +479,7 @@ Since RDS is publicly accessible:
    DB_PASSWORD (your DB password)
    ```
 
-3. **How it works:**
+3. **How it works:** - test
    - Push to `devtest` branch → Automatic deployment
    - Backend changes → Runs migrations → Builds Docker image → Pushes to ECR → Updates ECS service
    - Frontend changes → Builds React app → Uploads to S3 → Invalidates CloudFront
