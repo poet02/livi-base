@@ -37,5 +37,6 @@ Thumbs.db
 # Ignore built ts files
 dist/**/*
 
-# ignore yarn.lock
-yarn.lock
+# ignore yarn.lock (allow app-level lockfiles)
+!backend/yarn.lock
+!livi-app/yarn.lock
