@@ -26,7 +26,7 @@ class AuthService {
    */
   async requestOTP(mobile: string): Promise<void> {
     try {
-      const response = await api.post('/v1/auth/request-otp', { mobile });
+      const response = await api.post('/v1/auth/request-otp', { mobile }, { includeAuth: false });
       
       if (!response.success) {
         throw new Error(response.message || 'Failed to request OTP');
@@ -48,7 +48,7 @@ class AuthService {
         access_token: string;
         user: User;
         data: User;
-      }>('/v1/auth/verify-otp', { mobile, otp });
+      }>('/v1/auth/verify-otp', { mobile, otp }, { includeAuth: false });
 
       if (!response.success || !response.data.access_token) {
         throw new Error(response.message || 'Failed to verify OTP');

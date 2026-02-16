@@ -21,6 +21,7 @@ export interface RequestOptions {
   body?: unknown;
   timeout?: number;
   retries?: number;
+  includeAuth?: boolean;
 }
 
 // Environment configuration
@@ -32,14 +33,17 @@ const getAuthToken = (): string | null => {
   return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
 // Helper function to get common headers
-const getHeaders = (customHeaders?: Record<string, string>): HeadersInit => {
+const getHeaders = (customHeaders?: Record<string, string>, includeAuth = true): HeadersInit => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...customHeaders,
   };
 
-  const token = getAuthToken();
+  const token = includeAuth ? getAuthToken() : null;
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -73,11 +77,12 @@ export const apiRequest = async <T = unknown>(
     body,
     timeout = 10000,
     retries = 0,
+    includeAuth = true,
   } = options;
 
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
   console.log(`API Request: ${method} ${url}`);
-  const headers = getHeaders(customHeaders);
+  const headers = getHeaders(customHeaders, includeAuth);
 
   const config: RequestInit = {
     method,

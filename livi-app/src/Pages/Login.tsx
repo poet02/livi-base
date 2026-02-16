@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Input, LoginContainer } from "./styles";
 import { useAuth } from "../context/AuthContext";
@@ -34,6 +34,14 @@ export function Login() {
   const [step, setStep] = useState<"mobile" | "otp">("mobile");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+
+  useEffect(() => {
+    // Clear any stale auth on login screen
+    localStorage.removeItem("authToken");
+    sessionStorage.removeItem("authToken");
+    localStorage.removeItem("userData");
+    sessionStorage.removeItem("userData");
+  }, []);
 
   const handleRequestOTP = async () => {
     if (mobile.trim().length < 9) {
