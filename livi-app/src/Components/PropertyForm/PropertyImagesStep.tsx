@@ -97,6 +97,7 @@ const ImagePreview = styled.img`
   height: 100%;
   object-fit: cover;
   display: block;
+  transform: scaleX(-1); /* Mirror effect to match camera preview */
 `;
 
 const RemoveButton = styled.button`

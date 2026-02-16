@@ -81,6 +81,7 @@ const ImagePreview = styled.img`
   height: 100px;
   object-fit: cover;
   border-radius: ${props => props.theme.borderRadius.base};
+  transform: scaleX(-1); /* Mirror effect to match camera preview */
 `;
 
 const NoData = styled.span`
