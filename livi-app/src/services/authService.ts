@@ -22,6 +22,28 @@ const USER_KEY = 'userData';
  */
 class AuthService {
   /**
+   * Validate current session token against backend
+   */
+  async validateSession(): Promise<User> {
+    const response = await api.get<{ data: User; error: boolean }>('/v1/user');
+
+    if (!response.success) {
+      throw new Error(response.message || 'Session validation failed');
+    }
+
+    const backendResponse = response.data as unknown;
+    const user = typeof backendResponse === 'object' && backendResponse !== null && 'data' in backendResponse
+      ? (backendResponse as { data: User }).data
+      : (backendResponse as User);
+
+    if (!user || typeof user.id !== 'number') {
+      throw new Error('Invalid user data from session validation');
+    }
+
+    this.setUser(user);
+    return user;
+  }
+  /**
    * Request OTP for a mobile number
    */
   async requestOTP(mobile: string): Promise<void> {

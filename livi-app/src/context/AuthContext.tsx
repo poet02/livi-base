@@ -23,14 +23,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Initialize auth state on mount
   useEffect(() => {
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       try {
         const token = authService.getToken();
-        const userData = authService.getUser();
-        
-        if (token && userData) {
-          setUser(userData);
+        if (!token) {
+          return;
         }
+
+        const userData = await authService.validateSession();
+        setUser(userData);
       } catch (error) {
         console.error('Error initializing auth:', error);
         authService.logout();
