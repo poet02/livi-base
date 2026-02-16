@@ -401,6 +401,7 @@ export function Media() {
   const [debugInfo, setDebugInfo] = useState<string>('Initializing...');
   const [videoReady, setVideoReady] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const restartGuardRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Get callback from navigation state
   const onImagesCapture = location.state?.onImagesCapture;
@@ -539,18 +540,25 @@ export function Media() {
       const video = videoRef.current;
       if (video.srcObject !== stream) {
         video.srcObject = stream;
+        return;
       }
-      const playPromise = video.play();
-      if (playPromise) {
-        playPromise.catch((error: unknown) => {
-          if (error instanceof Error && error.name === 'AbortError') {
-            return;
-          }
-          console.error('Failed to restart video after preview:', error);
-          const message = error instanceof Error ? error.message : 'Unknown error';
-          setDebugInfo(`Failed to restart video: ${message}`);
-        });
+      if (restartGuardRef.current) {
+        clearTimeout(restartGuardRef.current);
       }
+      restartGuardRef.current = setTimeout(() => {
+        if (!video.paused || currentPreview) return;
+        const playPromise = video.play();
+        if (playPromise) {
+          playPromise.catch((error: unknown) => {
+            if (error instanceof Error && error.name === 'AbortError') {
+              return;
+            }
+            console.error('Failed to restart video after preview:', error);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            setDebugInfo(`Failed to restart video: ${message}`);
+          });
+        }
+      }, 150);
     }
   }, [currentPreview, stream]);
 
@@ -558,6 +566,10 @@ export function Media() {
   useEffect(() => {
     return () => {
       console.log('Cleaning up all object URLs');
+      if (restartGuardRef.current) {
+        clearTimeout(restartGuardRef.current);
+        restartGuardRef.current = null;
+      }
       imagePreviews.forEach(url => {
         URL.revokeObjectURL(url);
       });
