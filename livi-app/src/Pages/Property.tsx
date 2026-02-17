@@ -5,6 +5,7 @@ import { ArrowLeft, MapPin, Bed, Bath, Square, Heart, Share2, Phone, Mail } from
 import ImageGallery from 'react-image-gallery';
 import 'react-image-gallery/styles/css/image-gallery.css';
 import { Section as BaseSection, SectionTitle as BaseSectionTitle, Button as BaseButton } from '../styles/common';
+import type { Theme } from '../theme/theme';
 
 const Container = styled.div`
   height: 95vh;
@@ -104,12 +105,12 @@ const Content = styled.div`
   max-width: 100%;
   overflow-x: hidden;
   
-  @media (min-width: ${(props: any) => props.theme.breakpoints.sm}) {
-    padding: ${(props: any) => props.theme.responsive.spacing.containerPadding.tablet};
+  @media (min-width: ${(props: { theme: Theme }) => props.theme.breakpoints.sm}) {
+    padding: ${(props: { theme: Theme }) => props.theme.responsive.spacing.containerPadding.tablet};
   }
   
-  @media (min-width: ${(props: any) => props.theme.breakpoints.md}) {
-    padding: ${(props: any) => props.theme.spacing.xl} ${(props: any) => props.theme.spacing.lg};
+  @media (min-width: ${(props: { theme: Theme }) => props.theme.breakpoints.md}) {
+    padding: ${(props: { theme: Theme }) => props.theme.spacing.xl} ${(props: { theme: Theme }) => props.theme.spacing.lg};
   }
 `;
 
@@ -125,13 +126,13 @@ const SectionTitle = styled(BaseSectionTitle)`
 const DetailsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: ${(props: any) => props.theme.spacing.sm};
-  margin-bottom: ${(props: any) => props.theme.spacing.xl};
+  gap: ${(props: { theme: Theme }) => props.theme.spacing.sm};
+  margin-bottom: ${(props: { theme: Theme }) => props.theme.spacing.xl};
   width: 100%;
 
-  @media (min-width: ${(props: any) => props.theme.breakpoints.md}) {
+  @media (min-width: ${(props: { theme: Theme }) => props.theme.breakpoints.md}) {
     grid-template-columns: repeat(4, 1fr);
-    gap: ${(props: any) => props.theme.spacing.base};
+    gap: ${(props: { theme: Theme }) => props.theme.spacing.base};
   }
 `;
 
@@ -176,17 +177,17 @@ const Description = styled.p`
 const AmenitiesGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  gap: ${(props: any) => props.theme.spacing.sm};
+  gap: ${(props: { theme: Theme }) => props.theme.spacing.sm};
   width: 100%;
 
-  @media (min-width: ${(props: any) => props.theme.breakpoints.sm}) {
+  @media (min-width: ${(props: { theme: Theme }) => props.theme.breakpoints.sm}) {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: ${(props: any) => props.theme.spacing.base};
+    gap: ${(props: { theme: Theme }) => props.theme.spacing.base};
   }
   
-  @media (min-width: ${(props: any) => props.theme.breakpoints.md}) {
+  @media (min-width: ${(props: { theme: Theme }) => props.theme.breakpoints.md}) {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: ${(props: any) => props.theme.spacing.md};
+    gap: ${(props: { theme: Theme }) => props.theme.spacing.md};
   }
 `;
 

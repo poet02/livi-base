@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { Check } from 'lucide-react';
+import type { Theme } from '../../theme/theme';
 
 const ProgressContainer = styled.div`
   background: ${props => props.theme.colors.background.default};
@@ -8,12 +9,12 @@ const ProgressContainer = styled.div`
   width: 100%;
   overflow-x: hidden;
   
-  @media (min-width: ${(props: any) => props.theme.breakpoints.sm}) {
-    padding: ${(props: any) => props.theme.spacing.base};
+  @media (min-width: ${(props: { theme: Theme }) => props.theme.breakpoints.sm}) {
+    padding: ${(props: { theme: Theme }) => props.theme.spacing.base};
   }
   
-  @media (min-width: ${(props: any) => props.theme.breakpoints.md}) {
-    padding: ${(props: any) => props.theme.spacing.lg};
+  @media (min-width: ${(props: { theme: Theme }) => props.theme.breakpoints.md}) {
+    padding: ${(props: { theme: Theme }) => props.theme.spacing.lg};
   }
 `;
 
@@ -38,7 +39,7 @@ const ProgressSteps = styled.div`
     z-index: 0;
   }
   
-  @media (min-width: ${(props: any) => props.theme.breakpoints.sm}) {
+  @media (min-width: ${(props: { theme: Theme }) => props.theme.breakpoints.sm}) {
     max-width: 800px;
     padding: 0;
     
@@ -60,10 +61,10 @@ const ProgressLine = styled.div<{ progress: number }>`
   transition: width 0.3s ease;
   width: calc(${props => props.progress}% - ${props => props.theme.spacing.xs} * 2);
   
-  @media (min-width: ${(props: any) => props.theme.breakpoints.sm}) {
+  @media (min-width: ${(props: { theme: Theme }) => props.theme.breakpoints.sm}) {
     left: 0;
     right: 0;
-    width: ${(props: any) => props.progress}%;
+    width: ${(props: { theme: Theme; progress: number }) => props.progress}%;
   }
 `;
 
@@ -111,13 +112,13 @@ const StepCircle = styled.div<{ isActive: boolean; isCompleted: boolean }>`
     return props.theme.colors.border.light;
   }};
   
-  @media (min-width: ${(props: any) => props.theme.breakpoints.sm}) {
+  @media (min-width: ${(props: { theme: Theme }) => props.theme.breakpoints.sm}) {
     width: 36px;
     height: 36px;
-    font-size: ${(props: any) => props.theme.typography.fontSize.sm};
+    font-size: ${(props: { theme: Theme }) => props.theme.typography.fontSize.sm};
   }
   
-  @media (min-width: ${(props: any) => props.theme.breakpoints.md}) {
+  @media (min-width: ${(props: { theme: Theme }) => props.theme.breakpoints.md}) {
     width: 40px;
     height: 40px;
   }
@@ -137,7 +138,7 @@ const StepLabel = styled.span<{ isActive: boolean; isCompleted: boolean }>`
   /* Hide labels on very small screens, show on tablet+ */
   display: none;
   
-  @media (min-width: ${(props: any) => props.theme.breakpoints.sm}) {
+  @media (min-width: ${(props: { theme: Theme }) => props.theme.breakpoints.sm}) {
     display: block;
   }
 `;
