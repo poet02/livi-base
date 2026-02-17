@@ -247,7 +247,7 @@ export const DraggableList: React.FC<DraggableListProps> = ({
   }),
   useSensor(TouchSensor, {
     activationConstraint: {
-      delay: 100, // Reduced from 250ms to 100ms for better mobile responsiveness
+      delay: 200, // Increased to 200ms to require slightly longer press hold on mobile
       tolerance: 8, // Increased from 5 to 8 for better touch tolerance
     },
   })

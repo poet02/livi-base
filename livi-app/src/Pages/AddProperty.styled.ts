@@ -1,5 +1,7 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { Button as BaseButton } from '../styles/common';
+import { mobileFirst } from '../styles/responsive';
+import type { Theme } from '../theme/theme';
 
 export const Container = styled.div`
   height: 95vh;
@@ -68,15 +70,36 @@ export const Form = styled.form`
 
 export const FormActions = styled.div`
   display: flex;
-  gap: ${props => props.theme.spacing.base};
+  gap: ${(props: { theme: Theme }) => props.theme.spacing.sm}; /* Smaller gap on mobile */
   justify-content: space-between;
-  margin-top: ${props => props.theme.spacing.xl};
-  padding-top: ${props => props.theme.spacing.xl};
-  border-top: 1px solid ${props => props.theme.colors.border.light};
+  margin-top: ${(props: { theme: Theme }) => props.theme.spacing.lg}; /* Smaller margin on mobile */
+  padding-top: ${(props: { theme: Theme }) => props.theme.spacing.lg}; /* Smaller padding on mobile */
+  border-top: 1px solid ${(props: { theme: Theme }) => props.theme.colors.border.light};
+  flex-wrap: wrap; /* Allow buttons to wrap on very small screens */
+  
+  ${mobileFirst.tablet(css`
+    gap: ${(props: { theme: Theme }) => props.theme.spacing.base};
+    margin-top: ${(props: { theme: Theme }) => props.theme.spacing.xl};
+    padding-top: ${(props: { theme: Theme }) => props.theme.spacing.xl};
+    flex-wrap: nowrap;
+  `)}
 `;
 
 export const Button = styled(BaseButton)`
-  padding: ${props => props.theme.spacing.md} ${props => props.theme.spacing.xl};
+  padding: ${(props: { theme: Theme }) => props.theme.spacing.sm} ${(props: { theme: Theme }) => props.theme.spacing.base}; /* Smaller padding on mobile */
+  font-size: ${(props: { theme: Theme }) => props.theme.typography.fontSize.sm}; /* Smaller font on mobile */
+  min-height: 40px; /* Smaller min-height on mobile */
+  
+  ${mobileFirst.tablet(css`
+    padding: ${(props: { theme: Theme }) => props.theme.spacing.md} ${(props: { theme: Theme }) => props.theme.spacing.lg};
+    font-size: ${(props: { theme: Theme }) => props.theme.typography.fontSize.base};
+    min-height: 44px;
+  `)}
+  
+  ${mobileFirst.desktop(css`
+    padding: ${(props: { theme: Theme }) => props.theme.spacing.md} ${(props: { theme: Theme }) => props.theme.spacing.xl};
+    min-height: 48px;
+  `)}
 `;
 
 export const SuccessMessage = styled.div`
