@@ -52,6 +52,7 @@ const SortableItem = styled.div.withConfig({
     : '0 2px 8px rgba(0, 0, 0, 0.1)'
   };
   overflow: visible;
+  touch-action: none; /* Prevent scrolling conflicts on mobile */
 
   &:hover {
     border-color: #1976d2;
@@ -79,23 +80,32 @@ const DragHandle = styled.div.withConfig({
       transform: translateY(-50%);
     `
   }
-  padding: 0.25rem;
+  padding: 0.5rem; /* Increased padding for better touch target */
   border-radius: 4px;
   color: #666;
   transition: all 0.2s ease;
-  opacity: 0.6;
-  z-index: 10;
-  pointer-events: none;
+  opacity: 0.7;
+  z-index: 20; /* Increased z-index to ensure it's above content */
+  pointer-events: auto; /* Changed from none to auto to enable touch interactions */
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  cursor: grab;
+  touch-action: none; /* Prevent default touch behaviors */
+
+  &:active {
+    cursor: grabbing;
+    opacity: 1;
+  }
 
   &:hover {
     color: #1976d2;
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 1);
     opacity: 1;
   }
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 18px; /* Slightly larger for better touch target */
+    height: 18px;
   }
 `;
 
@@ -193,10 +203,11 @@ const SortableItemComponent: React.FC<SortableItemProps> = ({
       style={style}
       isDragging={isDragging}
       {...attributes}
-      {...listeners}
+      {...listeners} // Keep listeners on entire item for better mobile drag experience
     >
       <DragHandle 
         $handlePosition={handlePosition}
+        // Drag handle is visual indicator, actual drag works on entire item
       >
         {getDragHandleIcon()}
       </DragHandle>
@@ -236,8 +247,8 @@ export const DraggableList: React.FC<DraggableListProps> = ({
   }),
   useSensor(TouchSensor, {
     activationConstraint: {
-      delay: 250,
-      tolerance: 5,
+      delay: 100, // Reduced from 250ms to 100ms for better mobile responsiveness
+      tolerance: 8, // Increased from 5 to 8 for better touch tolerance
     },
   })
 );

@@ -32,7 +32,7 @@ const ResponsiveImageGridWrapper = styled.div`
   
   /* Override DraggableList Grid with responsive columns */
   > div > div {
-    grid-template-columns: repeat(4, 1fr) !important;
+    grid-template-columns: repeat(3, 1fr) !important; /* Changed from 4 to 3 for mobile */
     
     ${mobileFirst.tablet`
       grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
@@ -640,7 +640,8 @@ export function PropertyImagesStep({
               }}
               style={{ 
                 position: 'relative',
-                zIndex: 100
+                zIndex: 1, // Lower z-index so drag handle can be accessed
+                touchAction: 'manipulation' // Optimize touch interactions
               }}
             >
               <Plus />
@@ -719,7 +720,7 @@ export function PropertyImagesStep({
         <DraggableList
           items={draggableItems}
           onReorder={handleReorder}
-          gridTemplateColumns="repeat(4, 1fr)"
+          gridTemplateColumns="repeat(3, 1fr)"
           gap="1rem"
           showIndex={false}
           dragHandleIcon="grip"
