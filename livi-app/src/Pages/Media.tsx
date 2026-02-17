@@ -9,6 +9,9 @@ const Container = styled.div`
   background: #000;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 `;
 
 const Header = styled.div`
@@ -281,13 +284,23 @@ const DrawerContent = styled.div`
 `;
 
 const GalleryGrid = styled.div`
-  display: flex;
-  // flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
   height: 100%;
-  flex-wrap: wrap;
-  gap: 0.75rem;
   justify-content: center;
   padding-bottom: 1rem;
+  width: 100%;
+  overflow-x: hidden;
+  
+  @media (min-width: ${props => props.theme.breakpoints.sm}) {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.75rem;
+  }
+  
+  @media (min-width: ${props => props.theme.breakpoints.md}) {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
 `;
 
 const GalleryImageContainer = styled.div`

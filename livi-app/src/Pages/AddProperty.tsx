@@ -54,6 +54,9 @@ const Container = styled.div`
   background: ${props => props.theme.colors.background.paper};
   padding-bottom: ${props => props.theme.spacing.xl};
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  width: 100%;
+  max-width: 100%;
   color: ${props => props.theme.colors.text.primary};
 `;
 

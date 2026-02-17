@@ -170,6 +170,74 @@ export const theme = {
     base: '0.2s ease',
     slow: '0.3s ease',
   },
+
+  // Responsive Design Tokens (Mobile-First)
+  responsive: {
+    // Button sizes
+    button: {
+      iconSize: {
+        mobile: '24px',
+        tablet: '28px',
+        desktop: '32px',
+      },
+      padding: {
+        mobile: '0.5rem 1rem',
+        tablet: '0.625rem 1.25rem',
+        desktop: '0.75rem 1.5rem',
+      },
+      minHeight: {
+        mobile: '44px', // Minimum touch target size
+        tablet: '44px',
+        desktop: '40px',
+      },
+    },
+    // Grid configurations
+    grid: {
+      imageGrid: {
+        mobile: 'repeat(4, 1fr)', // 4 columns on mobile
+        tablet: 'repeat(auto-fill, minmax(100px, 1fr))',
+        desktop: 'repeat(auto-fill, minmax(150px, 1fr))',
+      },
+      propertyGrid: {
+        mobile: '1fr', // 1 column on mobile
+        tablet: 'repeat(2, 1fr)', // 2 columns on tablet
+        desktop: 'repeat(3, 1fr)', // 3 columns on desktop
+      },
+    },
+    // Spacing scale (smaller on mobile)
+    spacing: {
+      containerPadding: {
+        mobile: '1rem',
+        tablet: '1.5rem',
+        desktop: '2rem',
+      },
+      sectionGap: {
+        mobile: '1.5rem',
+        tablet: '2rem',
+        desktop: '2.5rem',
+      },
+    },
+    // Typography scale (smaller on mobile)
+    typography: {
+      heading: {
+        h1: {
+          mobile: '1.5rem', // 24px
+          tablet: '1.875rem', // 30px
+          desktop: '2.25rem', // 36px
+        },
+        h2: {
+          mobile: '1.25rem', // 20px
+          tablet: '1.5rem', // 24px
+          desktop: '1.875rem', // 30px
+        },
+        h3: {
+          mobile: '1.125rem', // 18px
+          tablet: '1.25rem', // 20px
+          desktop: '1.5rem', // 24px
+        },
+      },
+    },
+  },
 } as const;
 
 // Type exports for TypeScript

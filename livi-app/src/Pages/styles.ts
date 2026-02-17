@@ -61,6 +61,9 @@ export const Tab = styled.div`
 export const PageContainer = styled.div`
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
 `;
 
 export const PageHeader = styled.div`

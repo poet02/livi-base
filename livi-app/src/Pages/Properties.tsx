@@ -10,8 +10,19 @@ import { useNavigate } from 'react-router-dom';
 const PageContainer = styled.div`
   min-height: 100vh;
   background-color: ${props => props.theme.colors.background.paper};
-  padding: ${props => props.theme.spacing.xl};
+  padding: ${props => props.theme.responsive.spacing.containerPadding.mobile};
   overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  
+  @media (min-width: ${props => props.theme.breakpoints.sm}) {
+    padding: ${props => props.theme.responsive.spacing.containerPadding.tablet};
+  }
+  
+  @media (min-width: ${props => props.theme.breakpoints.md}) {
+    padding: ${props => props.theme.responsive.spacing.containerPadding.desktop};
+  }
 `;
 
 const Header = styled.div`
@@ -47,8 +58,18 @@ const ResultsCount = styled.p`
 
 const PropertiesGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: ${props => props.theme.spacing.lg};
+  grid-template-columns: 1fr;
+  gap: ${props => props.theme.spacing.base};
+  width: 100%;
+  
+  @media (min-width: ${props => props.theme.breakpoints.sm}) {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: ${props => props.theme.spacing.lg};
+  }
+  
+  @media (min-width: ${props => props.theme.breakpoints.md}) {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  }
 `;
 
 const LoadingMessage = styled.div`

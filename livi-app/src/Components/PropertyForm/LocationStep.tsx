@@ -64,12 +64,19 @@ const ErrorMessage = styled.span`
 
 const SearchContainer = styled.div`
   display: flex;
+  flex-direction: column;
   gap: ${props => props.theme.spacing.sm};
-  align-items: flex-start;
+  width: 100%;
+  overflow-x: hidden;
+  
+  @media (min-width: ${props => props.theme.breakpoints.sm}) {
+    flex-direction: row;
+    align-items: flex-start;
+  }
 `;
 
 const CurrentLocationButton = styled.button`
-  padding: ${props => props.theme.spacing.md};
+  padding: ${props => props.theme.responsive.button.padding.mobile};
   border: 1px solid ${props => props.theme.colors.border.light};
   border-radius: ${props => props.theme.borderRadius.base};
   background: ${props => props.theme.colors.background.default};
@@ -78,11 +85,23 @@ const CurrentLocationButton = styled.button`
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: ${props => props.theme.spacing.xs};
   transition: all ${props => props.theme.transitions.base};
   white-space: nowrap;
   flex-shrink: 0;
-  margin-top: ${props => props.theme.spacing.sm};
+  min-height: ${props => props.theme.responsive.button.minHeight.mobile};
+  width: 100%;
+  
+  @media (min-width: ${props => props.theme.breakpoints.sm}) {
+    width: auto;
+    margin-top: ${props => props.theme.spacing.sm};
+    padding: ${props => props.theme.responsive.button.padding.tablet};
+  }
+  
+  @media (min-width: ${props => props.theme.breakpoints.md}) {
+    padding: ${props => props.theme.responsive.button.padding.desktop};
+  }
 
   &:hover:not(:disabled) {
     background: ${props => props.theme.colors.grey[100]};
@@ -97,6 +116,14 @@ const CurrentLocationButton = styled.button`
   svg {
     width: 16px;
     height: 16px;
+    flex-shrink: 0;
+  }
+  
+  /* Shorter text on mobile */
+  span {
+    @media (max-width: ${props => parseInt(props.theme.breakpoints.sm) - 1}px) {
+      display: none;
+    }
   }
 `;
 
@@ -364,7 +391,7 @@ export function LocationStep({ register, errors, setValue, watch }: LocationStep
             title="Use your current location"
           >
             <MapPin />
-            {isGettingLocation ? 'Getting location...' : 'Use Current Location'}
+            <span>{isGettingLocation ? 'Getting location...' : 'Use Current Location'}</span>
           </CurrentLocationButton>
         </SearchContainer>
         {locationError && <ErrorMessage>{locationError}</ErrorMessage>}

@@ -6,10 +6,13 @@ import { PropertyFormData } from './types';
 import { DraggableList } from '../DraggableList';
 import { createDraggableItem, type DraggableItem } from '../DraggableList.utils';
 import { GridCamera } from './GridCamera';
+import { mobileFirst } from '../../styles/responsive';
 
 
 const Section = styled.div`
   margin-bottom: ${props => props.theme.spacing['2xl']};
+  width: 100%;
+  overflow-x: hidden;
 `;
 
 const InfoMessage = styled.div`
@@ -21,6 +24,24 @@ const InfoMessage = styled.div`
   color: ${props => props.theme.colors.text.primary};
   font-size: ${props => props.theme.typography.fontSize.sm};
   line-height: 1.5;
+`;
+
+const ResponsiveImageGridWrapper = styled.div`
+  width: 100%;
+  overflow-x: hidden;
+  
+  /* Override DraggableList Grid with responsive columns */
+  > div > div {
+    grid-template-columns: repeat(4, 1fr) !important;
+    
+    ${mobileFirst.tablet`
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+    `}
+    
+    ${mobileFirst.desktop`
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+    `}
+  }
 `;
 
 const ImageSlot = styled.div<{ isEmpty: boolean }>`
@@ -694,15 +715,17 @@ export function PropertyImagesStep({
         <strong>📸 Image Requirements:</strong> You can take images later, but you'll need at least <strong>3 images</strong> for your property to be listed. Currently you have <strong>{filledSlots}</strong> image{filledSlots !== 1 ? 's' : ''}.
       </InfoMessage>
 
-      <DraggableList
-        items={draggableItems}
-        onReorder={handleReorder}
-        gridTemplateColumns="repeat(auto-fill, minmax(150px, 1fr))"
-        gap="1rem"
-        showIndex={false}
-        dragHandleIcon="grip"
-        handlePosition="corner"
-      />
+      <ResponsiveImageGridWrapper>
+        <DraggableList
+          items={draggableItems}
+          onReorder={handleReorder}
+          gridTemplateColumns="repeat(4, 1fr)"
+          gap="1rem"
+          showIndex={false}
+          dragHandleIcon="grip"
+          handlePosition="corner"
+        />
+      </ResponsiveImageGridWrapper>
 
       {showModal && modalSlotIndex !== null && (
         <ModalOverlay onClick={() => setShowModal(false)}>

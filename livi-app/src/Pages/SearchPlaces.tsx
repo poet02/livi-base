@@ -6,7 +6,6 @@ import { usePlaceSearch } from '../hooks/usePlaceSearch';
 import { PlaceCard } from '../Components/PlaceCard';
 import { popularDestinations } from '../data/mockPlaces';
 import { Button as BaseButton } from '../styles/common';
-import { media } from '../styles/common';
 import { MapboxGeocoder } from '../Components/PropertyForm/MapboxGeocoder';
 import { MapboxFeature } from '../Components/PropertyForm/types';
 import type { PlaceToStay } from '../types/search';
@@ -14,6 +13,9 @@ import type { PlaceToStay } from '../types/search';
 const Container = styled.div`
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
   background: ${props => props.theme.colors.background.paper};
   color: ${props => props.theme.colors.text.primary};
 `;
@@ -46,12 +48,16 @@ const SearchSection = styled.div`
 
 const SearchContainer = styled.div`
   display: flex;
-  gap: ${props => props.theme.spacing.base};
+  flex-direction: column;
+  gap: ${props => props.theme.spacing.sm};
   align-items: stretch;
+  width: 100%;
+  overflow-x: hidden;
 
-  ${media.md`
-    flex-direction: column;
-  `}
+  @media (min-width: ${props => props.theme.breakpoints.md}) {
+    flex-direction: row;
+    gap: ${props => props.theme.spacing.base};
+  }
 `;
 
 const SearchInput = styled.div`

@@ -71,9 +71,20 @@ const AmenityTag = styled.span`
 
 const ImageGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: ${props => props.theme.spacing.sm};
   margin-top: ${props => props.theme.spacing.sm};
+  width: 100%;
+  
+  @media (min-width: ${props => props.theme.breakpoints.sm}) {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: ${props => props.theme.spacing.base};
+  }
+  
+  @media (min-width: ${props => props.theme.breakpoints.md}) {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: ${props => props.theme.spacing.lg};
+  }
 `;
 
 const ImagePreview = styled.img`
