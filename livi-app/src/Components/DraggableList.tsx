@@ -153,6 +153,7 @@ interface DraggableListProps {
   showIndex?: boolean;
   dragHandleIcon?: 'grip' | 'dots';
   handlePosition?: 'corner' | 'side';
+  disabled?: boolean; // Disable drag functionality (e.g., on mobile)
 }
 
 interface SortableItemProps {
@@ -236,6 +237,7 @@ export const DraggableList: React.FC<DraggableListProps> = ({
   showIndex = false,
   dragHandleIcon = 'grip',
   handlePosition = 'corner',
+  disabled = false,
 }) => {
   const [activeId, setActiveId] = React.useState<string | null>(null);
 
@@ -283,6 +285,21 @@ export const DraggableList: React.FC<DraggableListProps> = ({
       <Container className={className}>
         <Grid $gridTemplateColumns={gridTemplateColumns} $gap={gap}>
           <EmptyState>{emptyMessage}</EmptyState>
+        </Grid>
+      </Container>
+    );
+  }
+
+  // If disabled (e.g., on mobile), render static grid without drag functionality
+  if (disabled) {
+    return (
+      <Container className={className}>
+        <Grid $gridTemplateColumns={gridTemplateColumns} $gap={gap}>
+          {items.map((item) => (
+            <div key={item.id}>
+              {item.content}
+            </div>
+          ))}
         </Grid>
       </Container>
     );

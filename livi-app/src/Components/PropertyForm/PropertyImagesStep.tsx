@@ -8,6 +8,23 @@ import { createDraggableItem, type DraggableItem } from '../DraggableList.utils'
 import { GridCamera } from './GridCamera';
 import { mobileFirst } from '../../styles/responsive';
 
+// Hook to detect mobile screen size
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640); // Match theme.breakpoints.sm
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  return isMobile;
+};
+
 
 const Section = styled.div`
   margin-bottom: ${props => props.theme.spacing['2xl']};
@@ -336,6 +353,7 @@ export function PropertyImagesStep({
   imageLocations,
   setImageLocations
 }: PropertyImagesStepProps) {
+  const isMobile = useIsMobile();
   const [imageSlots, setImageSlots] = useState<ImageSlotData[]>(
     Array(MAX_IMAGES).fill(null).map(() => ({ file: null, preview: null, location: undefined }))
   );
@@ -725,6 +743,7 @@ export function PropertyImagesStep({
           showIndex={false}
           dragHandleIcon="grip"
           handlePosition="corner"
+          disabled={isMobile} // Disable drag on mobile
         />
       </ResponsiveImageGridWrapper>
 
